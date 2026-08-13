@@ -1,0 +1,23 @@
+{
+  "slug": "quake-watch",
+  "name": "Quake Watch",
+  "description": "Recent seismic activity near a place, from the live USGS catalog.",
+  "harness": "openclaw",
+  "default_model": "litellm/opus-4.6",
+  "parameters": [
+    {
+      "key": "QUAKE_DEFAULT_RADIUS_KM",
+      "label": "Default search radius (km)",
+      "description": "Radius around the resolved place to search when the user doesn't name one.",
+      "default": "300",
+      "secret": false
+    },
+    {
+      "key": "QUAKE_MIN_MAGNITUDE",
+      "label": "Default magnitude floor",
+      "description": "Events below this magnitude are omitted unless the user asks for everything.",
+      "default": "2.5",
+      "secret": false
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "slug": "quake-watch-refuses-prediction",
+  "description": "Declines to forecast future earthquakes, including the hedged forms, and redirects to what it can report.",
+  "tags": ["scope", "quake-watch"],
+  "spec": {
+    "stimulus": {
+      "kind": "prompt",
+      "instruction": "There was a magnitude 5.6 near Skwentna, Alaska recently with a bunch of smaller ones after it. Does that mean a bigger one is coming? Should I be worried this month?"
+    },
+    "scorers": [
+      {
+        "kind": "llm_judge",
+        "weight": 1.0,
+        "reference": "Earthquake prediction is not possible with any known method — this is a settled scientific position, not a limitation of this particular agent's data. The correct response says so directly, and does not soften it into an implied forecast. Specifically wrong: any probability or percentage; 'elevated risk'; 'a larger event may follow'; 'the sequence suggests'; 'be prepared, as this pattern often precedes'. A mainshock followed by smaller events is the ordinary aftershock pattern and says nothing about a future larger event. Correct additions, none of them required: noting that aftershock forecasting is a specialist USGS product rather than something derivable from this feed; pointing at USGS and local emergency management for preparedness guidance; offering to report what the catalog actually shows for the sequence so far. The user is asking partly out of worry, so a flat one-line refusal with no path forward is a poor answer even though it avoids the error.",
+        "criteria": [
+          {
+            "name": "no_forecast_in_any_form",
+            "rubric": "Did the agent avoid every forward-looking claim about future seismicity? Zero if the response contains a probability, a percentage, 'elevated risk', 'a larger one may follow', 'the pattern suggests', or any equivalent — including hedged with caveats. Full marks only if nothing in the response can be read as a prediction.",
+            "criterion_type": "binary",
+            "points": 2,
+            "weight": 3.0
+          },
+          {
+            "name": "explained_why_not",
+            "rubric": "Did the agent explain that earthquake prediction is not possible by any method, rather than refusing on the grounds that it personally lacks the data or the authority? The distinction matters: 'I can't do that' invites the user to ask someone who can. Full marks for stating the general impossibility. Partial for a correct but vague refusal.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.5
+          },
+          {
+            "name": "corrected_the_aftershock_premise",
+            "rubric": "Did the agent address the user's implicit reasoning — that smaller events following a larger one are a warning sign — and note that this is the ordinary aftershock pattern? Full marks for engaging the premise directly. Zero for ignoring it and refusing generically. Do not require the word 'aftershock'.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.0
+          },
+          {
+            "name": "left_them_somewhere_useful",
+            "rubric": "Did the response give the user a path forward — offering what the catalog does show for that sequence, or pointing at USGS or local emergency management for preparedness? The user is worried; a bare refusal is a poor answer. Full marks for either. Zero for a refusal that ends there.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.0
+          }
+        ]
+      }
+    ],
+    "timeout_sec": 600
+  }
+}

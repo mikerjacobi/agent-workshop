@@ -1,0 +1,48 @@
+{
+  "slug": "quake-watch-disambiguates-place",
+  "description": "Handles an ambiguous place name by naming which one it used, or by asking, instead of silently taking the first geocoding hit.",
+  "tags": ["grounding", "quake-watch"],
+  "spec": {
+    "stimulus": {
+      "kind": "prompt",
+      "instruction": "Any earthquakes near Springfield lately?"
+    },
+    "scorers": [
+      {
+        "kind": "artifact_gate",
+        "checks": [
+          { "check": "min_length", "file": "response.md", "value": 40 }
+        ]
+      },
+      {
+        "kind": "llm_judge",
+        "weight": 1.0,
+        "reference": "Springfield is one of the most ambiguous place names in the United States — Illinois, Missouri, Massachusetts, Ohio, Oregon and many others, plus Springfields outside the US. Their seismic settings differ enormously: Springfield, Missouri sits near the New Madrid region and has real activity; Springfield, Massachusetts is in a quiet intraplate setting. So a silent choice produces a confident answer about the wrong place. Two responses are fully correct: (a) list the plausible candidates with their state or country and ask which was meant, or (b) pick the most likely one, state explicitly which one was picked and where it is, and report results for it while noting the ambiguity. What is wrong is taking the first geocoding hit and answering as if the name were unambiguous. Reporting results for several Springfields at once is acceptable but not required.",
+        "criteria": [
+          {
+            "name": "surfaced_the_ambiguity",
+            "rubric": "Did the agent acknowledge that 'Springfield' is ambiguous — by asking which one, by naming the specific one it chose and where it is, or by covering several? Zero if the response answers for one Springfield without ever indicating which. Full marks for any of the three handled forms.",
+            "criterion_type": "binary",
+            "points": 2,
+            "weight": 3.0
+          },
+          {
+            "name": "identified_candidates_concretely",
+            "rubric": "If the agent asked, did it offer concrete candidates with state or country rather than a bare 'which Springfield?'. If it chose, did it give the state and coordinates? Full marks for concrete identifiers either way. Partial for a vague clarifying question.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.0
+          },
+          {
+            "name": "did_not_stall",
+            "rubric": "Did the agent make progress rather than only asking? Full marks if it either ran a search for a stated choice, or asked a question while offering to proceed with the most likely candidate. Partial for a clarifying question alone. Zero if it neither searched nor offered a path.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.0
+          }
+        ]
+      }
+    ],
+    "timeout_sec": 600
+  }
+}

@@ -118,7 +118,7 @@ mothership agents versions search <agent_id>
 
 Two ids exist and mixing them up is the most common confusion here:
 
-- **`slug`** — the human name you chose, e.g. `orbit-analyst`. Unique per org.
+- **`slug`** — the human name you chose, e.g. `quake-watch`. Unique per org.
 - **`agent_id`** — the generated surrogate, e.g. `agent_7f3a…`. This is what
   `sandboxes create`, `agents versions`, and `messages submit --agent-id`
   expect.
@@ -126,7 +126,7 @@ Two ids exist and mixing them up is the most common confusion here:
 Resolve one to the other:
 
 ```bash
-mothership --json agents search --slug.eq orbit-analyst | jq -r '.records[0].agent_id'
+mothership --json agents search --slug.eq quake-watch | jq -r '.records[0].agent_id'
 ```
 
 A **version** pins an image; the catalog row's `current_version` is what new

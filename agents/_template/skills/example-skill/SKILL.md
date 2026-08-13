@@ -22,6 +22,11 @@ server to register, a tool to check for.
 : "${SOME_KEY:?SOME_KEY is not set}"
 ```
 
+If this skill ships a script under `scripts/`, reference it from the workspace
+root — `.claude/skills/example-skill/scripts/thing.sh` — not as
+`./scripts/thing.sh`. The relative form only resolves if the agent happens to
+be in the skill directory, which it usually isn't.
+
 ## The calls
 
 The exact commands, with real parameter values, not placeholders the agent has

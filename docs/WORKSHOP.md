@@ -221,11 +221,11 @@ The template's comments walk you through each file. The order that works:
 6. **Two evals** — one that tests the job, one that tests the refusal.
 7. Publish, talk to it, evaluate, iterate.
 
-`agents/orbit-analyst/` is the worked version of exactly this: two skills, a
-declared parameter, and two evals. Read it when you get stuck on shape.
+`agents/quake-watch/` is the worked version of exactly this: two skills, two
+declared parameters, and three evals. Read it when you get stuck on shape.
 
 In Claude Code you can stay in plain language the whole way — "write an eval
-that checks it refuses to guess re-entry dates" loads the `author-eval` skill
+that checks it refuses to forecast earthquakes" loads the `author-eval` skill
 and does it.
 
 ## If something breaks

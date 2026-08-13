@@ -59,8 +59,8 @@ agents/hello-world/
 ```
 
 Two examples ship here: [`hello-world`](agents/hello-world/) (one skill, two
-evals) and [`orbit-analyst`](agents/orbit-analyst/) (two skills, a declared
-parameter, two evals). Copy [`_template/`](agents/_template/) to start your
+evals) and [`quake-watch`](agents/quake-watch/) (two skills, two declared
+parameters, three evals). Copy [`_template/`](agents/_template/) to start your
 own.
 
 ## The dev loop

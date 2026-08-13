@@ -16,7 +16,7 @@ bug in this repo.
 | `time` | Current time and timezone conversion via an MCP server. The worked example of the MCP registration pattern. |
 
 More live inside the example agents — `agents/hello-world/skills/` and
-`agents/orbit-analyst/skills/` — because a skill written against a specific
+`agents/quake-watch/skills/` — because a skill written against a specific
 agent's job is usually better than a generic one.
 
 ## The other skills directory
@@ -62,6 +62,15 @@ Both kinds use the same structure:
 a full field reference, worked query examples, a table of error codes — in
 `references/` and link to it from `SKILL.md`, so the agent pulls it in only
 when the situation calls for it.
+
+**Write script paths from the workspace root, not relatively.** An agent's
+working directory is the workspace, and a skill authored at
+`agents/my-agent/skills/my-skill/` lands at `.claude/skills/my-skill/` inside
+it. So `SKILL.md` should say
+`.claude/skills/my-skill/scripts/thing.sh`, not `./scripts/thing.sh` — the
+relative form only resolves if the agent happens to have changed directory
+first. Give a `curl` fallback too, so a moved script degrades instead of
+blocking. `agents/quake-watch/skills/usgs-quakes/SKILL.md` does both.
 
 ## Writing a good skill
 

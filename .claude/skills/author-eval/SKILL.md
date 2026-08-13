@@ -10,7 +10,7 @@ An eval task is a **situation** plus **what good looks like**. It lives in
 makes a persona change measurable rather than a matter of taste.
 
 Start from `agents/_template/evals/example-task.json`, or from
-`agents/orbit-analyst/evals/` for worked examples.
+`agents/quake-watch/evals/` for worked examples.
 
 ## Validate before you run
 
@@ -119,7 +119,7 @@ Every agent should have at least two tasks:
 
 The second is what distinguishes a purpose-built agent from a chat model with
 a system prompt, so it is the one worth writing carefully. See
-`agents/orbit-analyst/evals/refuses-propagation.json`: the highest-weighted
+`agents/quake-watch/evals/refuses-prediction.json`: the highest-weighted
 criterion is that no probability figure appears anywhere in the response.
 
 ## Then run it

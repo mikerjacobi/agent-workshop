@@ -1,0 +1,62 @@
+{
+  "slug": "quake-watch-recent-activity",
+  "description": "Geocodes a place, queries the live USGS catalog, and reports magnitude with depth, local time, and the search it ran.",
+  "tags": ["smoke", "quake-watch"],
+  "spec": {
+    "stimulus": {
+      "kind": "prompt",
+      "instruction": "Has there been any notable seismic activity near Anchorage, Alaska in the past week?"
+    },
+    "scorers": [
+      {
+        "kind": "artifact_gate",
+        "checks": [
+          { "check": "min_length", "file": "response.md", "value": 80 }
+        ]
+      },
+      {
+        "kind": "llm_judge",
+        "weight": 1.0,
+        "reference": "Grade the method, not a specific event list. This task runs against a live feed, so which earthquakes are in the window changes daily and no fixed answer can be checked. What can be checked: Anchorage, Alaska is at roughly 61.22N, 149.90W; the agent should have geocoded it and searched the USGS catalog around that point. South-central Alaska is seismically busy — a week typically contains several M2.5-M4 events, and zero events above the magnitude floor is possible but uncommon. Depth in this region ranges from a few km to over 100 km because of the subducting slab, so depths in the 100-150 km range are normal and not an error. Times in the raw feed are epoch milliseconds; any date reported as 1970 means the agent divided wrong. Alaska local time is UTC-8 in August. An empty result reported together with the search parameters is a fully correct answer; an empty result reported without them is not.",
+        "criteria": [
+          {
+            "name": "used_the_live_catalog",
+            "rubric": "Did the agent query the USGS catalog during this turn rather than describing seismicity from memory? Full marks if the response shows evidence of a live query — specific events with magnitudes and dates, or an explicit empty result. Zero for general statements about Alaska being seismically active with no retrieved data.",
+            "criterion_type": "binary",
+            "points": 2,
+            "weight": 2.0
+          },
+          {
+            "name": "reported_depth_with_magnitude",
+            "rubric": "Does every event the agent reports carry a depth in kilometers alongside its magnitude? The persona requires this because a shallow M4 is felt more strongly than a deep M5. Full marks if depth accompanies every magnitude. Partial if some events have it. Zero if magnitudes are reported alone.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.5
+          },
+          {
+            "name": "times_are_readable_and_correct",
+            "rubric": "Are event times given as readable timestamps, and is Alaska local time either used or given alongside UTC? Zero for raw epoch numbers, or for any date in 1970 (which means epoch milliseconds were treated as seconds). Full marks for a readable UTC time plus Alaska local time. Partial for readable UTC only.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.5
+          },
+          {
+            "name": "stated_the_search_it_ran",
+            "rubric": "Did the agent say what it actually searched — the center point or place it resolved, the radius, the magnitude floor, and the time window? A reader cannot judge 'nothing notable' without this. Full marks if at least the radius and the magnitude floor appear. Zero if the answer gives results with no indication of the search bounds.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.0
+          },
+          {
+            "name": "no_unprompted_forecast",
+            "rubric": "Did the agent avoid any forward-looking claim — 'elevated risk', 'more may follow', 'aftershocks expected', a probability? Nothing in the question invites one, and the persona forbids it. Full marks if the response is entirely retrospective. Zero if any predictive language appears, including hedged.",
+            "criterion_type": "binary",
+            "points": 2,
+            "weight": 2.0
+          }
+        ]
+      }
+    ],
+    "timeout_sec": 900
+  }
+}

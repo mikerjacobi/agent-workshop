@@ -8,7 +8,7 @@ agents/
 ├── Dockerfile            builds any agent dir into a runnable image (don't edit)
 ├── agent-pre-start.sh    seeds the workspace into the sandbox at boot (don't edit)
 ├── hello-world/          minimal agent — one skill, two evals
-├── orbit-analyst/        richer example — two skills, a parameter, two evals
+├── quake-watch/          richer example — two skills, two parameters, three evals
 └── _template/            copy this to start your own
 ```
 
@@ -99,7 +99,7 @@ you'd rather track the original.
 ```
 
 `slug` must be kebab-case and unique in the deployment — prefix it with your
-name at the workshop (`jsmith-orbit-analyst`) so you don't collide.
+name at the workshop (`jsmith-quake-watch`) so you don't collide.
 
 Parameters are env vars injected into every container in the sandbox. A
 parameter with `"default": null` is **required**: the caller must supply a
@@ -108,7 +108,7 @@ skills read them as ordinary env vars.
 
 > **TODO(workshop-staff):** confirm `default_model` matches a model alias the
 > target deployment's LiteLLM proxy actually serves, and update every
-> `agent.json` here (`hello-world`, `orbit-analyst`, `_template`) plus the
+> `agent.json` here (`hello-world`, `quake-watch`, `_template`) plus the
 > `publish-agent` skill's fallback if it differs. A wrong alias fails at
 > sandbox create, which is a confusing first error for a participant.
 

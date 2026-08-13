@@ -86,10 +86,10 @@ A good skill body carries four things a system prompt rarely does:
 - What you may derive from the data, with the formulas.
 - **What you may not derive from it**, and what would be required instead.
 
-The fourth is where purpose-built beats general-purpose. `celestrak-tle`
-explains how to get from mean motion to orbital period, and in the same breath
-that a single element set cannot give you the satellite's current position
-without a propagator. A general model will happily do both.
+The fourth is where purpose-built beats general-purpose. `usgs-quakes`
+explains how to read shaking intensity out of the catalog, and in the same
+breath that nothing in the feed supports a claim about future earthquakes. A
+general model will happily do both.
 
 ### Evals are the feedback loop
 
@@ -202,12 +202,12 @@ production without a rebuild.
 
 The one thing worth memorizing:
 
-- **`slug`** — the human name you chose, `orbit-analyst`. Unique per org.
+- **`slug`** — the human name you chose, `quake-watch`. Unique per org.
 - **`agent_id`** — the generated surrogate, `agent_7f3a…`. What
   `sandboxes create`, `agents versions`, and `messages submit --agent-id` take.
 
 ```bash
-mothership --json agents search --slug.eq orbit-analyst | jq -r '.records[0].agent_id'
+mothership --json agents search --slug.eq quake-watch | jq -r '.records[0].agent_id'
 ```
 
 ## Why the CLI is vendored here
