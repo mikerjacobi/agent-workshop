@@ -74,7 +74,7 @@ ls -R agents/hello-world
 | `SOUL.md` | Mission, voice, and what it refuses |
 | `USER.md` | Who it's talking to |
 | `CLAUDE.md` | Where things are and which skills exist |
-| `.claude/skills/iss-position/SKILL.md` | How to get the ISS's position, and what not to conclude from it |
+| `skills/iss-position/SKILL.md` | How to get the ISS's position, and what not to conclude from it |
 | `agent.json` | Catalog metadata — never reaches the agent |
 
 Give it a slug nobody else will take. Edit `agents/hello-world/agent.json` and
@@ -83,7 +83,7 @@ change `"slug"` to something like `"jsmith-hello-world"`.
 Then publish:
 
 ```bash
-./skills/workshop/publish-agent/publish.sh hello-world
+./.claude/skills/publish-agent/scripts/publish.sh hello-world
 ```
 
 Or, in Claude Code, just say: **"publish the hello-world agent"**.
@@ -98,7 +98,7 @@ below wants it.
 export AGENT=<the agent_id it printed>
 ```
 
-While it builds, read `agents/hello-world/.claude/skills/iss-position/SKILL.md`.
+While it builds, read `agents/hello-world/skills/iss-position/SKILL.md`.
 Notice how much of it is about what the fields actually mean and what the data
 does not support. That is the part that makes the agent trustworthy.
 
@@ -144,8 +144,8 @@ highest-weighted criterion is a **binary** one: did it decline, yes or no.
 Check them locally, then run:
 
 ```bash
-python3 skills/workshop/author-eval/validate.py agents/hello-world/evals
-./skills/workshop/run-eval/run.sh hello-world
+python3 .claude/skills/author-eval/scripts/validate.py agents/hello-world/evals
+./.claude/skills/run-eval/scripts/run.sh hello-world
 ```
 
 Or say: **"run the evals for hello-world"**.
@@ -183,8 +183,8 @@ easiest first:
 Change **one** thing. Then:
 
 ```bash
-./skills/workshop/publish-agent/publish.sh hello-world
-./skills/workshop/run-eval/run.sh hello-world
+./.claude/skills/publish-agent/scripts/publish.sh hello-world
+./.claude/skills/run-eval/scripts/run.sh hello-world
 mothership evals report --run-id <new_run_id> --previous $BASELINE
 ```
 
@@ -215,7 +215,7 @@ The template's comments walk you through each file. The order that works:
    harder and they are what makes it an agent.
 3. **`USER.md`** — one paragraph on who it serves.
 4. **One skill.** Start with a public API and no auth. Copy
-   `skills/library/http-json` as the starting shape.
+   `skills/http-json` as the starting shape.
 5. **`CLAUDE.md`** — list the skill in the table. A skill the agent doesn't
    know about will never be invoked; this is the single most common bug.
 6. **Two evals** — one that tests the job, one that tests the refusal.

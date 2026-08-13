@@ -12,8 +12,8 @@ new one under the same task, so the history stays comparable.
 ## Do this
 
 ```bash
-./skills/workshop/run-eval/run.sh <agent-dir-name>            # all tasks
-./skills/workshop/run-eval/run.sh <agent-dir-name> <file>     # one task file
+./.claude/skills/run-eval/scripts/run.sh <agent-dir-name>            # all tasks
+./.claude/skills/run-eval/scripts/run.sh <agent-dir-name> <file>     # one task file
 ```
 
 Run it from the repo root. The agent has to be published first — the run
@@ -22,7 +22,7 @@ executes against the agent's **current version**, so publish, then evaluate.
 Validate the task files locally first; it costs nothing and saves a round trip:
 
 ```bash
-python3 skills/workshop/author-eval/validate.py agents/<name>/evals
+python3 .claude/skills/author-eval/scripts/validate.py agents/<name>/evals
 ```
 
 ## What to expect

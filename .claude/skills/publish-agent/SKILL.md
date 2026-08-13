@@ -12,7 +12,7 @@ promotes it.
 ## Do this
 
 ```bash
-./skills/workshop/publish-agent/publish.sh <agent-dir-name>
+./.claude/skills/publish-agent/scripts/publish.sh <agent-dir-name>
 ```
 
 Run it from the repo root. Report the printed `agent_id` back to the user —
@@ -28,7 +28,7 @@ build to discover:
    user is at a workshop, suggest prefixing it with their name.
 3. `SOUL.md`, `CLAUDE.md`, and `USER.md` all exist.
 4. Every skill named in `CLAUDE.md`'s table exists under
-   `.claude/skills/<name>/SKILL.md`, and every skill directory is named in
+   `skills/<name>/SKILL.md`, and every skill directory is named in
    the table. A skill the agent doesn't know about will never be invoked.
 5. Every env var the skills read is declared in `agent.json`'s `parameters`.
    Grep the skills for `$[A-Z_]` and compare.

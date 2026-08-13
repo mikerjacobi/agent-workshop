@@ -16,7 +16,7 @@ if [[ -z "$AGENT" ]]; then
 fi
 shift || true
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 AGENT_DIR="$REPO_ROOT/agents/$AGENT"
 EVAL_DIR="$AGENT_DIR/evals"
 
@@ -27,7 +27,7 @@ SLUG=$(jq -r '.slug' "$AGENT_DIR/agent.json")
 AGENT_ID=$(mothership --json agents search --slug.eq "$SLUG" | jq -r '.records[0].agent_id // empty')
 if [[ -z "$AGENT_ID" ]]; then
   echo "agent '$SLUG' is not in the catalog — publish it first:" >&2
-  echo "  ./skills/workshop/publish-agent/publish.sh $AGENT" >&2
+  echo "  ./.claude/skills/publish-agent/scripts/publish.sh $AGENT" >&2
   exit 1
 fi
 echo "▸ agent $SLUG ($AGENT_ID)"

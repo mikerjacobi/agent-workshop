@@ -14,7 +14,7 @@ if [[ -z "$AGENT" ]]; then
   exit 2
 fi
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 AGENT_DIR="$REPO_ROOT/agents/$AGENT"
 MANIFEST="$AGENT_DIR/agent.json"
 

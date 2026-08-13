@@ -30,7 +30,7 @@ not a client-side reimplementation of them. Two consequences worth knowing:
 1. `mothership <resource> <action> --help` is generated from those models, so
    the help output cannot drift from the API.
 2. You can validate a request locally before sending it. That's what
-   `skills/workshop/author-eval/validate.py` does with eval specs.
+   `.claude/skills/author-eval/scripts/validate.py` does with eval specs.
 
 When you want to know what fields something accepts, read the model, not a doc
 page:
@@ -74,5 +74,5 @@ mothership profiles set workshop --base-url <url> --external-id <you>
 `MOTHERSHIP_API_KEY` carries a real credential when the deployment needs one;
 it is read from the environment only and never written to disk by the CLI.
 
-The `mothership-cli` skill (`skills/workshop/mothership-cli/SKILL.md`) is the
+The `mothership-cli` skill (`.claude/skills/mothership-cli/SKILL.md`) is the
 task-oriented reference for the command surface.

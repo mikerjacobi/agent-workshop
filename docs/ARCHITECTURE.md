@@ -30,7 +30,7 @@ agent when it improvises past either.
        │      ┌──────────────────────────────┐        │
        │      │          SKILLS              │        │
        │      │  procedures, loaded on demand│        │
-       │      │  .claude/skills/<name>/      │        │
+       │      │  agents/<name>/skills/<skill>/│        │
        │      └──────────────────────────────┘        │
        └──────────────────────────────────────────────┘
                           ▲
@@ -64,7 +64,7 @@ mostly mechanical.
 
 ### Skills are procedure
 
-A skill is `.claude/skills/<name>/SKILL.md`: frontmatter with a `name` and a
+A skill is `skills/<name>/SKILL.md`: frontmatter with a `name` and a
 `description`, then a body.
 
 The split matters. **The description is always in the agent's context. The
@@ -219,5 +219,5 @@ accepts, `cli/mothership-client/src/mothership_client/models/eval_spec.py` is
 the answer, and `mothership evals --help` is generated from the same models.
 The docs can drift from the code; those two cannot.
 
-It also means `skills/workshop/author-eval/validate.py` can check your eval
+It also means `.claude/skills/author-eval/scripts/validate.py` can check your eval
 files locally against the real schema before anything goes over the wire.

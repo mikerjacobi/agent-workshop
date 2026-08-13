@@ -54,7 +54,7 @@ agents/hello-world/
 ├── USER.md                              who it serves
 ├── CLAUDE.md                            how it operates
 ├── agent.json                           catalog metadata
-├── .claude/skills/iss-position/         one skill, loaded on demand
+├── skills/iss-position/SKILL.md          one skill, loaded on demand
 └── evals/                               two tasks that hold it to the above
 ```
 
@@ -66,7 +66,7 @@ own.
 ## The dev loop
 
 Open the repo in Claude Code and ask in plain language — the helper skills in
-[`skills/workshop/`](skills/) load themselves:
+[`.claude/skills/`](.claude/skills/) load themselves:
 
 > publish the hello-world agent
 > run its evals
@@ -75,9 +75,9 @@ Open the repo in Claude Code and ask in plain language — the helper skills in
 Or run the same scripts directly:
 
 ```bash
-./skills/workshop/publish-agent/publish.sh hello-world
-./skills/workshop/run-eval/run.sh hello-world
-python3 skills/workshop/author-eval/validate.py agents/hello-world/evals
+./.claude/skills/publish-agent/scripts/publish.sh hello-world
+./.claude/skills/run-eval/scripts/run.sh hello-world
+python3 .claude/skills/author-eval/scripts/validate.py agents/hello-world/evals
 ```
 
 Nothing is hidden. Each skill wraps a script you can read.

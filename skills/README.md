@@ -1,66 +1,67 @@
 # skills/
 
-Two kinds of skill live here, and confusing them is the most common
-stumble in this repo. Both are Markdown files with the same shape. What
-differs is **who reads them**.
-
-```
-skills/
-├── library/     agent skills — copied into an agent, read by YOUR agent at runtime
-└── workshop/    helper skills — read by Claude Code, in YOUR editor, to do the dev loop
-```
-
-| | `skills/library/` | `skills/workshop/` |
-|---|---|---|
-| Read by | The agent you built, running in a sandbox | Claude Code, on your laptop |
-| Gets there via | You copy it into `agents/<name>/.claude/skills/` | The `.claude/skills/` symlinks at the repo root |
-| Ships in the image | Yes | No |
-| Example | "how to query CelesTrak" | "how to publish an agent" |
-
-## skills/library/ — the agent skill library
-
-Reusable skills to copy into an agent. They are files; copy them.
+A library of agent skills to copy into an agent. They are files; copy them.
 
 ```bash
-cp -r skills/library/http-json agents/my-agent/.claude/skills/
+cp -r skills/http-json agents/my-agent/skills/
 ```
 
 Then add the skill to the table in your agent's `CLAUDE.md`. A skill the agent
-doesn't know exists will never be invoked.
+doesn't know exists will never be invoked — that is the single most common
+bug in this repo.
 
 | Skill | What it covers |
 |-------|----------------|
 | `http-json` | Driving a JSON REST API with curl and jq: auth, status codes, pagination, rate limits. Start here when wrapping a new API. |
 | `time` | Current time and timezone conversion via an MCP server. The worked example of the MCP registration pattern. |
 
-More live inside the example agents — `agents/hello-world/.claude/skills/` and
-`agents/orbit-analyst/.claude/skills/` — because a skill written against a
-specific agent's job is usually better than a generic one.
+More live inside the example agents — `agents/hello-world/skills/` and
+`agents/orbit-analyst/skills/` — because a skill written against a specific
+agent's job is usually better than a generic one.
 
-## skills/workshop/ — helper skills for you
+## The other skills directory
 
-These are Claude Code skills. Open this repo in Claude Code and ask for what
-you want in plain language; the right one loads itself.
+`.claude/skills/` at the repo root holds a different thing, and confusing the
+two is easy. Both are Markdown files with the same shape. What differs is
+**who reads them**.
 
-| Skill | Ask for it by saying |
-|-------|----------------------|
-| `publish-agent` | "publish my agent", "ship this change" |
-| `author-eval` | "write an eval for this", "add a test" |
-| `run-eval` | "run the evals", "did that make it better?" |
-| `mothership-cli` | "why did that command fail?", or any direct CLI question |
+| | `skills/` (here) | `.claude/skills/` (repo root) |
+|---|---|---|
+| Read by | The agent you built, running in a sandbox | Claude Code, on your laptop |
+| Gets there via | You copy it into `agents/<name>/skills/` | Already there |
+| Ships in the image | Yes | No |
+| Example | "how to query a satellite catalog" | "how to publish an agent" |
 
-They exist to keep the docker-build, catalog-registration, version-promotion,
-sandbox-recycling sequence out of your head. Each wraps a script you can also
-run yourself:
+The helper skills — `publish-agent`, `author-eval`, `run-eval`,
+`mothership-cli` — keep the docker-build, catalog-registration,
+version-promotion, sandbox-recycling sequence out of your head. Open the repo
+in Claude Code and ask in plain language; the right one loads itself. Each
+wraps a script you can also run yourself:
 
 ```bash
-./skills/workshop/publish-agent/publish.sh <agent>
-./skills/workshop/run-eval/run.sh <agent>
-python3 skills/workshop/author-eval/validate.py agents/<agent>/evals
+./.claude/skills/publish-agent/scripts/publish.sh <agent>
+./.claude/skills/run-eval/scripts/run.sh <agent>
+python3 .claude/skills/author-eval/scripts/validate.py agents/<agent>/evals
 ```
 
 Nothing is hidden — read the script the skill calls if you want to know
 exactly what happened.
+
+## Skill directory layout
+
+Both kinds use the same structure:
+
+```
+<skill-name>/
+├── SKILL.md       required — frontmatter + the procedure
+├── scripts/       optional — executables the skill invokes
+└── references/    optional — detail loaded only when needed
+```
+
+`SKILL.md` is what gets read first. Put anything long and situational —
+a full field reference, worked query examples, a table of error codes — in
+`references/` and link to it from `SKILL.md`, so the agent pulls it in only
+when the situation calls for it.
 
 ## Writing a good skill
 
@@ -77,5 +78,5 @@ Same advice for both kinds:
 - **Say what failure looks like** and what to report. An empty result is often
   a valid answer; a 500 never is.
 
-`agents/_template/.claude/skills/example-skill/SKILL.md` has the full
-structure with prompts for each section.
+`agents/_template/skills/example-skill/SKILL.md` has the full structure with
+prompts for each section.

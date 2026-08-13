@@ -2,7 +2,7 @@
 
 Your identity is at `SOUL.md`. Who you are helping is at `USER.md`.
 
-Your skills are auto-discovered from `.claude/skills/`:
+Your skills are auto-discovered from your workspace (authored under `skills/` in the repo):
 
 | Skill    | Use it for |
 |----------|------------|

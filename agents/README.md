@@ -20,10 +20,35 @@ agents/
 | `CLAUDE.md` | Operating instructions: where things are, which skills exist, what env vars to read. |
 | `USER.md` | Who the agent is helping, and what that implies about tone and depth. |
 | `agent.json` | Catalog metadata: slug, display name, harness, model, declared parameters. |
-| `.claude/skills/<name>/SKILL.md` | One skill. Loaded on demand, not held in context. |
+| `skills/<name>/` | One skill: `SKILL.md`, plus optional `scripts/` and `references/`. Loaded on demand, not held in context. |
 | `evals/*.json` | Eval tasks. One file per task. |
 
-`SOUL.md`, `CLAUDE.md`, `USER.md`, and `.claude/` are copied into the image and
+A fuller agent directory looks like this:
+
+```
+agents/my-agent/
+├── SOUL.md
+├── CLAUDE.md
+├── USER.md
+├── agent.json
+├── skills/
+│   └── my-skill/
+│       ├── SKILL.md          the procedure
+│       ├── scripts/          executables the skill invokes
+│       └── references/       detail loaded only when needed
+└── evals/
+    └── my-task.json
+```
+
+Put anything long and situational in `references/` and link to it from
+`SKILL.md`. The agent pulls it in only when the situation calls for it, which
+is the whole reason skills beat a longer system prompt.
+
+At build time `skills/` is renamed to `.claude/skills/`, which is where the
+harness discovers it. You author at the path a person would look in; the
+Dockerfile handles the runtime convention.
+
+`SOUL.md`, `CLAUDE.md`, `USER.md`, and `skills/` are copied into the image and
 seeded into the running sandbox. `agent.json` and `evals/` never reach the
 agent — they are consumed by the CLI at publish and eval time.
 
@@ -46,7 +71,7 @@ takes it from there:
 Skills are files. Copy one in:
 
 ```bash
-cp -r skills/library/http-json agents/my-agent/.claude/skills/
+cp -r skills/http-json agents/my-agent/skills/
 ```
 
 The build dereferences symlinks (`cp -rL`), so a relative symlink works too if

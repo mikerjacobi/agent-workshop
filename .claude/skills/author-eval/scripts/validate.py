@@ -4,8 +4,8 @@
 The server rejects a bad spec with a 422 after a network round trip; this
 catches the same errors locally, with the field path, before you run anything.
 
-    python3 skills/workshop/author-eval/validate.py agents/hello-world/evals/*.json
-    python3 skills/workshop/author-eval/validate.py agents/hello-world/evals
+    python3 .claude/skills/author-eval/scripts/validate.py agents/hello-world/evals/*.json
+    python3 .claude/skills/author-eval/scripts/validate.py agents/hello-world/evals
 
 The models come from the vendored `mothership-client` package in `cli/` — the
 exact classes the API validates with, not a copy of them.

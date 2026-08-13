@@ -15,7 +15,7 @@ Start from `agents/_template/evals/example-task.json`, or from
 ## Validate before you run
 
 ```bash
-python3 skills/workshop/author-eval/validate.py agents/<name>/evals
+python3 .claude/skills/author-eval/scripts/validate.py agents/<name>/evals
 ```
 
 This validates against the platform's own pydantic models — the same classes
@@ -125,5 +125,5 @@ criterion is that no probability figure appears anywhere in the response.
 ## Then run it
 
 ```bash
-./skills/workshop/run-eval/run.sh <agent-dir-name>
+./.claude/skills/run-eval/scripts/run.sh <agent-dir-name>
 ```

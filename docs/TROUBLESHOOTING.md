@@ -101,7 +101,7 @@ Almost always one of these, in order of likelihood:
 2. The `description` in the skill's frontmatter doesn't describe the situation
    the user is actually in. The description is the routing decision — rewrite
    it as "what this retrieves, and when to reach for it."
-3. The skill directory isn't at `.claude/skills/<name>/SKILL.md`.
+3. The skill directory isn't at `skills/<name>/SKILL.md`.
 4. You edited it but didn't republish. Skills are baked into the image.
 
 Verify what actually shipped:
@@ -129,7 +129,7 @@ one you installed into.
 The spec doesn't validate. Run the local validator to get the field path:
 
 ```bash
-python3 skills/workshop/author-eval/validate.py agents/<name>/evals
+python3 .claude/skills/author-eval/scripts/validate.py agents/<name>/evals
 ```
 
 Common causes: a `slug` that isn't kebab-case, an `agent_id` left in the file

@@ -31,10 +31,21 @@ USER root
 RUN test -n "$AGENT" || (echo "AGENT build arg is required: docker build --build-arg AGENT=<dir>" && exit 1)
 
 COPY . /tmp/build/
+
+# Stage the agent workspace, then reshape it for the runtime:
+#   - agent.json and evals/ are CLI inputs, not agent content — they never ship.
+#   - Skills are authored at `<agent>/skills/` because that is where a person
+#     looks for them; the harness discovers them at `.claude/skills/`. The
+#     rename happens here so no agent directory has to carry a dot directory.
 RUN test -d "/tmp/build/${AGENT}" || (echo "agent '${AGENT}' not found under agents/" && exit 1) \
  && mkdir -p ${AGENT_TEMPLATE_DIR} \
  && cp -rL /tmp/build/${AGENT}/. ${AGENT_TEMPLATE_DIR}/ \
- && rm -f ${AGENT_TEMPLATE_DIR}/agent.json
+ && rm -rf ${AGENT_TEMPLATE_DIR}/agent.json ${AGENT_TEMPLATE_DIR}/evals \
+ && if [ -d ${AGENT_TEMPLATE_DIR}/skills ]; then \
+      mkdir -p ${AGENT_TEMPLATE_DIR}/.claude \
+      && mv ${AGENT_TEMPLATE_DIR}/skills ${AGENT_TEMPLATE_DIR}/.claude/skills; \
+    fi \
+ && ls -A ${AGENT_TEMPLATE_DIR}
 
 # ── Runtime: base + workspace, nothing else ──────────────────────────────
 FROM --platform=$DEPLOY_PLATFORM $BASE_IMAGE AS base
