@@ -45,10 +45,8 @@ agent-workshop/
 ```
 
 Skills appear in two places and the split is by **reader**: `skills/` is read
-by Claude Code on your laptop to drive the dev loop, `agents/<name>/skills/`
-is read by the agent you built, running in a sandbox. `.claude/skills` is a
-symlink to `skills/` — Claude Code only scans that path, and that symlink is
-the only reason `.claude/` exists.
+by you (or Claude Code) to drive the dev loop, `agents/<name>/skills/` is read
+by the agent you built, running in a sandbox.
 
 ## What's in an agent
 
@@ -57,8 +55,6 @@ Markdown. No code.
 ```
 agents/hello-world/
 ├── SOUL.md                              mission, voice, refusals
-├── USER.md                              who it serves
-├── CLAUDE.md                            how it operates
 ├── agent.json                           catalog metadata
 ├── skills/iss-position/SKILL.md          one skill, loaded on demand
 └── evals/                               two tasks that hold it to the above
@@ -71,22 +67,16 @@ own.
 
 ## The dev loop
 
-Open the repo in Claude Code and ask in plain language — the helper skills in
-[`skills/`](skills/) load themselves:
+Open the repo in Claude Code and ask in plain language, pointing it at the
+matching skill in [`skills/`](skills/):
 
 > publish the hello-world agent
 > run its evals
 > write an eval that checks it refuses to guess pass times
 
-Or run the same scripts directly:
-
-```bash
-python3 skills/publish-agent/scripts/publish.py hello-world
-python3 skills/run-eval/scripts/run.py hello-world
-python3 skills/author-eval/scripts/validate.py agents/hello-world/evals
-```
-
-Nothing is hidden. Each skill wraps a script you can read.
+Each skill is a procedure over the `mothership` CLI — the exact commands, in
+order, with what the failures mean. Read one and you can run the loop by hand;
+there is no wrapper in between.
 
 ## Requirements
 

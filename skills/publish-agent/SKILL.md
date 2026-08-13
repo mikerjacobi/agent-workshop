@@ -5,82 +5,141 @@ description: "Build a workshop agent directory into an image and make it the liv
 
 # Publish an agent
 
-Turns `agents/<name>/` into a running agent. One command, idempotent — the
-first run registers the agent, every run after that ships a new version and
-promotes it.
+Turns `agents/<name>/` into a running agent: build the image, push it, and
+make it the agent's current version. Idempotent — the first run registers the
+agent, every run after that mints a version and promotes it.
 
-## Do this
+Run these from the repo root. `MOTHERSHIP_IMAGE_REGISTRY` must be set; if it
+isn't, stop and tell the user to get the value from workshop staff. A local
+image tag is unresolvable from the deployment and fails much later with a far
+worse error, so never work around a missing registry.
 
-```bash
-python3 skills/publish-agent/scripts/publish.py <agent-dir-name>
-```
+## 1. Check before you build
 
-Run it from anywhere — the script locates the repo root from its own path.
-Report the printed `agent_id` back to the user; they need it for every
-subsequent command. Set `AGENT_VERSION` to label the version yourself instead
-of taking the default UTC timestamp.
+Each of these costs a five-minute image build to discover otherwise:
 
-## Before you run it
+- `agents/<name>/agent.json` exists and `slug` is not `change-me`.
+- `slug` is unique in a shared deployment. If the user is at a workshop and it
+  isn't prefixed, suggest their name (`jsmith-hello-world`).
+- `SOUL.md` exists and is more than a sentence.
+- Every skill directory has a `SKILL.md` with a `description` in its
+  frontmatter — that description is what makes the skill discoverable.
+- Every env var the skills read is declared in `agent.json`'s `parameters`.
+  Grep the skills for `$[A-Z_]` and compare.
+- `mothership profiles list` shows the deployment you expect.
 
-Check these; each one is a failure that costs the user a five-minute image
-build to discover:
-
-1. `agents/<name>/agent.json` exists and `slug` is not `CHANGE-ME`.
-2. `slug` is prefixed to be unique in a shared deployment. If it isn't and the
-   user is at a workshop, suggest prefixing it with their name.
-3. `SOUL.md`, `CLAUDE.md`, and `USER.md` all exist.
-4. Every skill named in `CLAUDE.md`'s table exists under
-   `skills/<name>/SKILL.md`, and every skill directory is named in
-   the table. A skill the agent doesn't know about will never be invoked.
-5. Every env var the skills read is declared in `agent.json`'s `parameters`.
-   Grep the skills for `$[A-Z_]` and compare.
-6. `MOTHERSHIP_IMAGE_REGISTRY` is set in the environment.
-
-## What it does
-
-| Step | Why |
-|------|-----|
-| `docker build` with `--build-arg AGENT=<name>` | Bakes the workspace to `/etc/agent` in the image |
-| `docker push` | The deployment's orchestrator pulls from the registry, not your laptop |
-| `agents create` **or** `agents versions create --set-current` | Registers or promotes; the catalog row is what a sandbox binds to |
-| `agents update --parameters …` | Parameters and model live on the catalog row, not the version, so they need a separate push |
-| `sandboxes stop` on running sandboxes | A running sandbox holds the image it booted with and would otherwise serve the old agent |
-
-The version label is a UTC timestamp unless `AGENT_VERSION` is set.
-
-## After it succeeds
-
-Offer to talk to it:
+Read the manifest:
 
 ```bash
-mothership messages submit "<a question the agent should handle>" --agent-id <agent_id>
+AGENT=<agent-dir-name>
+SLUG=$(jq -r .slug agents/$AGENT/agent.json)
+VERSION=$(date -u +%Y%m%d-%H%M%S)
+IMAGE="$MOTHERSHIP_IMAGE_REGISTRY/$SLUG:$VERSION"
 ```
 
-The first message provisions a sandbox and takes 30–90 seconds. Later messages
-in the same thread are fast. Pass `--thread-id` to continue a conversation.
+## 2. Build and push
+
+The build context is `agents/`, and `AGENT` is the **directory name**, which
+can differ from the slug.
+
+```bash
+docker build --build-arg AGENT=$AGENT -t $IMAGE -f agents/Dockerfile agents/
+docker push $IMAGE
+```
+
+Three to five minutes, most of it the build. The Dockerfile bakes the
+workspace to `/etc/agent` and renames `skills/` to `.claude/skills/`, which is
+where the harness discovers it.
+
+## 3. Register or promote
+
+Resolve the slug to the surrogate `agent_id` — versions and sandboxes take the
+surrogate, never the slug:
+
+```bash
+AGENT_ID=$(mothership --json agents search --slug.eq $SLUG | jq -r '.records[0].agent_id // empty')
+```
+
+**Empty — first publish.** Creating the catalog row mints its first version:
+
+```bash
+mothership agents create \
+  --slug $SLUG \
+  --name "$(jq -r .name agents/$AGENT/agent.json)" \
+  --description "$(jq -r '.description // ""' agents/$AGENT/agent.json)" \
+  --harness "$(jq -r '.harness // "openclaw"' agents/$AGENT/agent.json)" \
+  --default-model "$(jq -r .default_model agents/$AGENT/agent.json)" \
+  --image $IMAGE \
+  --version $VERSION \
+  --parameters "$(jq -c .parameters agents/$AGENT/agent.json)"
+```
+
+> **Omit `--parameters` entirely when the array is empty.** It is a list flag,
+> so `--parameters '[]'` parses as one bogus element and the command fails
+> with "Input should be a valid dictionary". Drop `--default-model` too if the
+> manifest has none.
+
+Then re-read `AGENT_ID` with the same search — you need it for step 4.
+
+**Non-empty — later publishes.** Mint the version and promote it:
+
+```bash
+mothership agents versions create $AGENT_ID --version $VERSION --image $IMAGE --set-current
+```
+
+Name, description, model, and parameters live on the **catalog row**, not the
+version, so a manifest edit needs its own call. Here `--parameters` is a plain
+JSON string flag, so `'[]'` is fine and means "clear them":
+
+```bash
+mothership agents update $AGENT_ID \
+  --name "$(jq -r .name agents/$AGENT/agent.json)" \
+  --description "$(jq -r '.description // ""' agents/$AGENT/agent.json)" \
+  --parameters "$(jq -c .parameters agents/$AGENT/agent.json)"
+```
+
+## 4. Recycle running sandboxes
+
+A running sandbox holds the image it booted with, so it keeps serving the old
+agent. Stop it and the next message reprovisions on the new version:
+
+```bash
+mothership --json sandboxes search --state.eq RUNNING --agent-id.eq $AGENT_ID \
+  | jq -r '.records[].sandbox_id' \
+  | xargs -r -n1 mothership sandboxes stop
+```
+
+Enum filters are uppercase: `--state.eq RUNNING`, not `running`.
+
+## 5. Report back
+
+Give the user the `agent_id`, the version, and the image — they need the
+`agent_id` for every subsequent command. Then offer to talk to it:
+
+```bash
+mothership messages submit "<a question the agent should handle>" --agent-id $AGENT_ID
+```
+
+The first message takes 30–90 seconds while the sandbox starts.
 
 ## When it fails
 
-**`no such agent directory`** — the argument is the directory name under
-`agents/`, not the slug. They can differ.
+**`docker push` denied** — not authenticated to the registry. Tell them to
+`docker login`. Do not point the catalog at a local tag instead.
 
-**Build fails on `AGENT build arg is required`** — the script was run from
-somewhere other than the repo root, or with no argument.
+**`agents create` rejects the slug** — it collides with an existing agent
+(prefix it) or isn't kebab-case.
 
-**`docker push` denied** — the user is not authenticated to the registry.
-Do not work around this by pointing the catalog at a local image tag; a
-local tag is unresolvable from the deployment and produces a sandbox that
-fails to start with a much less obvious error. Tell them to authenticate.
+**`--parameters` errors with "Input should be a valid dictionary"** — the
+empty-array trap above.
 
-**`agents create` rejects the slug** — either it collides with an existing
-agent in the org (prefix it) or it isn't kebab-case.
+**Agent behaves like the old version** — a stale sandbox survived. Re-run
+step 4, or add `--force-sandbox-recreate` to the next `messages submit`.
 
-**Sandbox starts but the agent behaves like the old version** — a stale
-sandbox survived. Re-run with `mothership sandboxes search --state.eq running`
-and stop it, or add `--force-sandbox-recreate` to the next `messages submit`.
+**Sandbox never reaches `RUNNING`** — usually an image the deployment can't
+pull, or a parameter declared with `"default": null` and never supplied.
+Check `mothership --json sandboxes search --agent-id.eq $AGENT_ID` for the
+state, and see [TROUBLESHOOTING.md](../../docs/TROUBLESHOOTING.md).
 
-**Sandbox never reaches `running`** — usually the image tag is unresolvable
-from the deployment, or a required parameter (one with `"default": null`)
-wasn't supplied at sandbox create. Check
-`mothership --json sandboxes search --agent-id.eq <agent_id>` for the state
-and error.
+If a `mothership` command fails, re-run it with `--help` rather than guessing
+another flag — the help is generated from the models the API validates with.

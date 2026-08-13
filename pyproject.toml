@@ -3,7 +3,7 @@
 
 [tool.mypy]
 python_version = "3.12"
-files = ["skills", "agents"]
+files = ["agents"]
 strict = true
 # Skill scripts are standalone files run by path, not an importable package,
 # and several share a module name (main, fetch). Check them independently.

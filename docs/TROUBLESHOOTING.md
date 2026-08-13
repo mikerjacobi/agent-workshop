@@ -96,13 +96,11 @@ Or force it on the next message with `--force-sandbox-recreate`.
 **The agent ignores a skill you added**
 Almost always one of these, in order of likelihood:
 
-1. The skill isn't listed in the table in `CLAUDE.md`. The agent never learns
-   it exists.
-2. The `description` in the skill's frontmatter doesn't describe the situation
+1. The `description` in the skill's frontmatter doesn't describe the situation
    the user is actually in. The description is the routing decision — rewrite
    it as "what this retrieves, and when to reach for it."
-3. The skill directory isn't at `skills/<name>/SKILL.md`.
-4. You edited it but didn't republish. Skills are baked into the image.
+2. The skill directory isn't at `skills/<name>/SKILL.md`.
+3. You edited it but didn't republish. Skills are baked into the image.
 
 Verify what actually shipped:
 
@@ -121,25 +119,8 @@ Check with `mothership --json agents search --slug.eq <slug> | jq '.records[0].p
 Publish before evaluating. The run executes against the agent's current
 version.
 
-**`validate.py` says `mothership-client is not installed`**
-Same fix as `command not found` — you're running a different Python than the
-one you installed into. Every helper script imports the vendored packages, so
-this hits all of them, not just the validator.
-
-**A script exits with `Error: --something: <message>`**
-That is a flag the script's pydantic model rejected — a bad type, a value out
-of range, a missing required field. The message names the flag. `--help` on
-any of the scripts lists the fields and their defaults, generated from the
-same model that just refused the input.
-
 **A 422 on `evals create`**
-The spec doesn't validate. Run the local validator to get the field path:
-
-```bash
-python3 skills/author-eval/scripts/validate.py agents/<name>/evals
-```
-
-Common causes: a `slug` that isn't kebab-case, an `agent_id` left in the file
+The spec doesn't validate. The error names the field. Common causes: a `slug` that isn't kebab-case, an `agent_id` left in the file
 (it's injected at sync time), or a scorers list containing only gates — at
 least one non-gate scorer is required, since gates can only zero a reward.
 

@@ -74,23 +74,21 @@ ls -R agents/hello-world
 | File | What it is |
 |------|------------|
 | `SOUL.md` | Mission, voice, and what it refuses |
-| `USER.md` | Who it's talking to |
-| `CLAUDE.md` | Where things are and which skills exist |
+
 | `skills/iss-position/SKILL.md` | How to get the ISS's position, and what not to conclude from it |
 | `agent.json` | Catalog metadata — never reaches the agent |
 
 Give it a slug nobody else will take. Edit `agents/hello-world/agent.json` and
 change `"slug"` to something like `"jsmith-hello-world"`.
 
-Then publish:
+Then publish. In Claude Code:
 
-```bash
-python3 skills/publish-agent/scripts/publish.py hello-world
-```
+> publish the hello-world agent
 
-Or, in Claude Code, just say: **"publish the hello-world agent"**.
+That follows [`skills/publish-agent`](../skills/publish-agent/SKILL.md) —
+build the image, push it, register the agent, mint version 1. Read the skill
+if you'd rather run the commands yourself; they're all there, in order.
 
-This builds the image, pushes it, registers the agent, and mints version 1.
 Three to five minutes, most of it the docker build.
 
 It prints an `agent_id` like `agent_7f3a…`. Keep it — nearly every command
@@ -143,14 +141,12 @@ The first checks that it uses live data and names a place. The second checks
 the refusal you just saw by hand. Note that the refusal task's
 highest-weighted criterion is a **binary** one: did it decline, yes or no.
 
-Check them locally, then run:
+Then run them:
 
-```bash
-python3 skills/author-eval/scripts/validate.py agents/hello-world/evals
-python3 skills/run-eval/scripts/run.py hello-world
-```
+> run the evals for hello-world
 
-Or say: **"run the evals for hello-world"**.
+That follows [`skills/run-eval`](../skills/run-eval/SKILL.md) — sync each task
+file to the platform, start a run, poll it, print the report.
 
 Each task gets its own fresh sandbox, so budget two to five minutes per task.
 The script blocks and prints progress, then a scored report.
@@ -182,15 +178,14 @@ easiest first:
 - **Scored low on `used_live_data`?** The skill's "When it fails" section is
   where to push: make it explicit that a remembered position is always wrong.
 
-Change **one** thing. Then:
+Change **one** thing. Then publish and re-run it — same two requests as
+before — and compare:
 
 ```bash
-python3 skills/publish-agent/scripts/publish.py hello-world
-python3 skills/run-eval/scripts/run.py hello-world
 mothership evals report --run-id <new_run_id> --previous $BASELINE
 ```
 
-The last command prints Δ columns: what moved, and by how much.
+That prints Δ columns: what moved, and by how much.
 
 Two things to be honest about when you read it:
 
@@ -215,20 +210,17 @@ The template's comments walk you through each file. The order that works:
 2. **`SOUL.md`** — mission, capabilities, working habits, refusals. Spend most
    of your time here. Write the refusals before the capabilities; they are
    harder and they are what makes it an agent.
-3. **`USER.md`** — one paragraph on who it serves.
-4. **One skill.** Start with a public API and no auth. Copy
+3. **One skill.** Start with a public API and no auth. Copy
    `agents/_template/skills/example-skill/` as the starting shape.
-5. **`CLAUDE.md`** — list the skill in the table. A skill the agent doesn't
-   know about will never be invoked; this is the single most common bug.
-6. **Two evals** — one that tests the job, one that tests the refusal.
-7. Publish, talk to it, evaluate, iterate.
+4. **Two evals** — one that tests the job, one that tests the refusal.
+5. Publish, talk to it, evaluate, iterate.
 
 `agents/quake-watch/` is the worked version of exactly this: two skills, two
 declared parameters, and three evals. Read it when you get stuck on shape.
 
 In Claude Code you can stay in plain language the whole way — "write an eval
-that checks it refuses to forecast earthquakes" loads the `author-eval` skill
-and does it.
+that checks it refuses to forecast earthquakes" follows the `author-eval`
+skill and does it.
 
 ## If something breaks
 

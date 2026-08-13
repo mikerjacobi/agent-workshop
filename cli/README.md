@@ -29,8 +29,8 @@ not a client-side reimplementation of them. Two consequences worth knowing:
 
 1. `mothership <resource> <action> --help` is generated from those models, so
    the help output cannot drift from the API.
-2. You can validate a request locally before sending it. That's what
-   `skills/author-eval/scripts/validate.py` does with eval specs.
+2. You can validate a request locally before sending it — the `author-eval`
+   skill does exactly that with eval specs.
 
 When you want to know what fields something accepts, read the model, not a doc
 page:

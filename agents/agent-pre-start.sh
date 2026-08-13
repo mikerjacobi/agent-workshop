@@ -9,11 +9,10 @@ WORKSPACE="$STATE_DIR/workspace"
 
 # Copy the entire baked agent template onto the shared volume. The
 # template is whatever the builder laid down under $PERSONA_ROOT —
-# CLAUDE.md, USER.md, SOUL.md, and the .claude/skills the agent reads
-# on demand. Copy it wholesale (dotfiles included, symlinks
-# dereferenced) rather than cherry-picking known filenames, so a new
-# top-level file in an agent directory reaches the workspace without a
-# script change.
+# SOUL.md plus the .claude/skills the agent reads on demand. Copy it
+# wholesale (dotfiles included, symlinks dereferenced) rather than
+# cherry-picking known filenames, so a new top-level file in an agent
+# directory reaches the workspace without a script change.
 if [ -d "$PERSONA_ROOT" ]; then
   mkdir -p "$WORKSPACE"
   cp -RL "$PERSONA_ROOT"/. "$WORKSPACE"/

@@ -23,9 +23,7 @@ agent when it improvises past either.
        ┌──────────────────────────────────────────────┐
        │                   AGENT                      │
        │                                              │
-       │  SOUL.md    mission, voice, refusals         │
-       │  USER.md    who it serves                    │
-       │  CLAUDE.md  how it operates, what it has     │
+       │  SOUL.md    mission, audience, refusals      │
        │                                              │
        │      ┌──────────────────────────────┐        │
        │      │          SKILLS              │        │
@@ -53,14 +51,14 @@ satellite operations" produces a general-purpose model wearing a costume.
 What produces an agent is stating what it does, how it works, and — the part
 that matters — what it refuses and why.
 
-`USER.md` is who is on the other side. "A satellite operations analyst who
+It also says who is on the other side. "A satellite operations analyst who
 knows orbital mechanics better than you do" and "a member of the public" are
 the same capability aimed at different people, and the mismatch is what makes
 an agent feel wrong.
 
-`CLAUDE.md` is the operating manual: where things are, which skills exist,
-which env vars carry configuration. It is the only one of the three that is
-mostly mechanical.
+There is no second prose file. Skills are discovered from the workspace, so
+nothing has to list them, and configuration is declared in `agent.json` and
+read from the environment.
 
 ### Skills are procedure
 
@@ -219,5 +217,5 @@ accepts, `cli/mothership-client/src/mothership_client/models/eval_spec.py` is
 the answer, and `mothership evals --help` is generated from the same models.
 The docs can drift from the code; those two cannot.
 
-It also means `skills/author-eval/scripts/validate.py` can check your eval
-files locally against the real schema before anything goes over the wire.
+It also means you can check an eval file against the real schema before
+anything goes over the wire — see the `author-eval` skill.

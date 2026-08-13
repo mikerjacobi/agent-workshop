@@ -1,6 +1,6 @@
 ---
 name: author-eval
-description: "Write an eval task file for an agent: choose the stimulus, write rubric criteria the judge can actually apply, and validate the spec locally before running it. Use when the user wants to add a test, an eval, a rubric, or a check for their agent's behavior."
+description: "Write an eval task file for an agent: choose the stimulus, write rubric criteria the judge can actually apply, and check the spec before running it. Use when the user wants to add a test, an eval, a rubric, or a check for their agent's behavior."
 ---
 
 # Author an eval
@@ -12,15 +12,23 @@ makes a persona change measurable rather than a matter of taste.
 Start from `agents/_template/evals/example-task.json`, or from
 `agents/quake-watch/evals/` for worked examples.
 
-## Validate before you run
+## The schema is the model file
+
+`cli/mothership-client/src/mothership_client/models/eval_spec.py` is the
+authority on every field a spec accepts — it is the class the API validates
+with, not a description of it. Read it rather than guessing, and read it again
+when a 422 comes back, because the error names the field.
+
+To check a file before syncing it, validate against that same class:
 
 ```bash
-python3 skills/author-eval/scripts/validate.py agents/<name>/evals
+python3 -c "import json,sys; from mothership_client.models.eval_task import CreateEvalTaskInput as T; \
+T(agent_id='agent_check', **json.load(open(sys.argv[1]))); print('ok', sys.argv[1])" \
+agents/<name>/evals/<task>.json
 ```
 
-This validates against the platform's own pydantic models — the same classes
-the API validates with — and flags rubrics that are too thin to score
-consistently. Do this every time; a 422 after a five-minute run is a waste.
+`agent_id` is a placeholder there — files on disk omit it, and `run-eval`
+injects the real one at sync time.
 
 ## The file
 
@@ -122,8 +130,15 @@ a system prompt, so it is the one worth writing carefully. See
 `agents/quake-watch/evals/refuses-prediction.json`: the highest-weighted
 criterion is that no probability figure appears anywhere in the response.
 
+## Common rejections
+
+- `slug` not kebab-case, or not unique across the deployment.
+- An `agent_id` left in the file — it is injected at sync time, so remove it.
+- A `scorers` list containing only gates. At least one non-gate scorer is
+  required, since a gate can only zero a reward.
+- Extra keys anywhere. The models are `extra="forbid"`, so a typo'd field name
+  is an error rather than a silently ignored one.
+
 ## Then run it
 
-```bash
-python3 skills/run-eval/scripts/run.py <agent-dir-name>
-```
+Hand off to the `run-eval` skill, which syncs the file and starts the run.
