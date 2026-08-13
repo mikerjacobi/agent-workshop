@@ -75,8 +75,8 @@ Open the repo in Claude Code and ask in plain language — the helper skills in
 Or run the same scripts directly:
 
 ```bash
-./.claude/skills/publish-agent/scripts/publish.sh hello-world
-./.claude/skills/run-eval/scripts/run.sh hello-world
+python3 .claude/skills/publish-agent/scripts/publish.py hello-world
+python3 .claude/skills/run-eval/scripts/run.py hello-world
 python3 .claude/skills/author-eval/scripts/validate.py agents/hello-world/evals
 ```
 
@@ -84,8 +84,13 @@ Nothing is hidden. Each skill wraps a script you can read.
 
 ## Requirements
 
-`git`, `docker`, `python3` ≥ 3.12, `jq`, and access to a Mothership
-deployment. Workshop participants arrive with credentials already configured.
+`git`, `docker`, `python3` ≥ 3.12, and access to a Mothership deployment.
+Workshop participants arrive with credentials already configured.
+
+The helper scripts are Python and take their dependencies from the vendored
+CLI, so the `pip install` above is the whole setup. `jq` is optional — handy
+for picking ids out of `mothership --json` by hand, not needed by anything
+here.
 
 ## What's not here
 

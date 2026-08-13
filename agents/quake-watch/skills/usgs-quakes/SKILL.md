@@ -13,17 +13,32 @@ you come here.
 
 ## The easy path
 
-This skill ships a script that wraps the query and flattens the GeoJSON into
-one line per event. Run it from your workspace root, where skills live under
-`.claude/skills/`:
+This skill ships a script that runs the query and flattens the GeoJSON into
+one line per event, with the misread-prone fields already decoded. Run it from
+your workspace root, where skills live under `.claude/skills/`:
 
 ```bash
-.claude/skills/usgs-quakes/scripts/quakes.sh \
-  --lat 61.218 --lon -149.900 --radius 300 --min-mag 2.5 --days 7
+python3 .claude/skills/usgs-quakes/scripts/quakes.py \
+  --latitude 61.218 --longitude -149.900 --radius_km 300 --min_magnitude 2.5 --days 7
 ```
 
-If that path doesn't resolve, don't hunt for it — use the direct `curl` below.
-The script is a convenience, not a dependency.
+```
+search: 300 km around 61.218,-149.9 | M2.5+ | 2026-08-06 to 2026-08-13
+M3.9   depth  147.2 km  2026-08-11T22:26:55Z  59 km NE of Pedro Bay, Alaska    felt=3     mmi=1.65  …
+M5.6   depth   10.0 km  2026-08-08T04:50:34Z  57 km WNW of Skwentna, Alaska    felt=1137  mmi=5.88  …
+2 event(s)
+```
+
+`--radius_km` and `--min_magnitude` default to `$QUAKE_DEFAULT_RADIUS_KM` and
+`$QUAKE_MIN_MAGNITUDE`; a flag beats the environment. `--raw` prints the
+unmodified GeoJSON — redirect that to a file in your working directory when a
+follow-up question is likely. `--help` lists everything.
+
+The first line is the search itself. Keep it: an empty result is only a useful
+answer when the reader can see what was looked for.
+
+If the script is missing, don't hunt for it — use the direct call below. It is
+a convenience, not a dependency.
 
 ```
 M5.6  depth  10.0 km  2026-08-06T05:30:34Z  57 km WNW of Skwentna, Alaska        felt=1137  mmi=5.9

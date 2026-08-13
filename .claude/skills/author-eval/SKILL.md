@@ -125,5 +125,5 @@ criterion is that no probability figure appears anywhere in the response.
 ## Then run it
 
 ```bash
-./.claude/skills/run-eval/scripts/run.sh <agent-dir-name>
+python3 .claude/skills/run-eval/scripts/run.py <agent-dir-name>
 ```

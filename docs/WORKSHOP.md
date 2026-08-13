@@ -20,7 +20,8 @@ Steps 1 and 3 are mostly waiting. Read ahead while they run.
 
 ## Step 0 — Set up
 
-You need `git`, `docker` (running), `python3` 3.12 or newer, and `jq`.
+You need `git`, `docker` (running), and `python3` 3.12 or newer. Everything
+else comes from the `pip install` below.
 
 ```bash
 git clone https://github.com/mikerjacobi/agent-workshop.git
@@ -84,7 +85,7 @@ change `"slug"` to something like `"jsmith-hello-world"`.
 Then publish:
 
 ```bash
-./.claude/skills/publish-agent/scripts/publish.sh hello-world
+python3 .claude/skills/publish-agent/scripts/publish.py hello-world
 ```
 
 Or, in Claude Code, just say: **"publish the hello-world agent"**.
@@ -146,7 +147,7 @@ Check them locally, then run:
 
 ```bash
 python3 .claude/skills/author-eval/scripts/validate.py agents/hello-world/evals
-./.claude/skills/run-eval/scripts/run.sh hello-world
+python3 .claude/skills/run-eval/scripts/run.py hello-world
 ```
 
 Or say: **"run the evals for hello-world"**.
@@ -184,8 +185,8 @@ easiest first:
 Change **one** thing. Then:
 
 ```bash
-./.claude/skills/publish-agent/scripts/publish.sh hello-world
-./.claude/skills/run-eval/scripts/run.sh hello-world
+python3 .claude/skills/publish-agent/scripts/publish.py hello-world
+python3 .claude/skills/run-eval/scripts/run.py hello-world
 mothership evals report --run-id <new_run_id> --previous $BASELINE
 ```
 

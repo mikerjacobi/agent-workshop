@@ -10,6 +10,18 @@ with your own — the structure is what's worth keeping.
 
 `curl`, `jq`, and `python3` are on your PATH.
 
+## curl inline, or a script?
+
+Inline `curl` plus `jq` is right for a one-off call: one endpoint, a couple of
+fields, nothing subtle in the response.
+
+Write a script under the skill's `scripts/` instead when the response has a
+shape worth typing — units that mislead, a field buried somewhere unexpected,
+an enum that has to be mapped. A pydantic model gets each of those wrong once,
+where it can be fixed, rather than every time the JSON is read. See
+`agents/quake-watch/skills/usgs-quakes/scripts/quakes.py` for the reference
+shape and `skills/README.md` for the conventions those scripts follow.
+
 ## Read credentials from the environment
 
 Never inline a key. Declare it as an agent parameter in `agent.json`, then:

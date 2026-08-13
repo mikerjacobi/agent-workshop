@@ -23,8 +23,8 @@ server to register, a tool to check for.
 ```
 
 If this skill ships a script under `scripts/`, reference it from the workspace
-root — `.claude/skills/example-skill/scripts/thing.sh` — not as
-`./scripts/thing.sh`. The relative form only resolves if the agent happens to
+root — `.claude/skills/example-skill/scripts/thing.py` — not as
+`./scripts/thing.py`. The relative form only resolves if the agent happens to
 be in the skill directory, which it usually isn't.
 
 ## The calls

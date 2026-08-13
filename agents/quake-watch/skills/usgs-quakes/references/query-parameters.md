@@ -2,7 +2,7 @@
 
 Base URL: `https://earthquake.usgs.gov/fdsnws/event/1/query`
 
-Load this when `scripts/quakes.sh` doesn't expose the parameter you need. For
+Load this when `scripts/quakes.py` doesn't expose the parameter you need. For
 ordinary "what happened near X" questions the script is enough.
 
 ## Always set

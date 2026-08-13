@@ -83,7 +83,7 @@ it's the pushed URI, not a local tag), or a parameter declared with
 `--sandbox-param KEY=VALUE`.
 
 **The agent answers, but behaves like the old version**
-A running sandbox holds the image it booted with. `publish.sh` stops running
+A running sandbox holds the image it booted with. `publish.py` stops running
 sandboxes for you, but if you registered a version some other way:
 
 ```bash
@@ -123,7 +123,14 @@ version.
 
 **`validate.py` says `mothership-client is not installed`**
 Same fix as `command not found` — you're running a different Python than the
-one you installed into.
+one you installed into. Every helper script imports the vendored packages, so
+this hits all of them, not just the validator.
+
+**A script exits with `Error: --something: <message>`**
+That is a flag the script's pydantic model rejected — a bad type, a value out
+of range, a missing required field. The message names the flag. `--help` on
+any of the scripts lists the fields and their defaults, generated from the
+same model that just refused the input.
 
 **A 422 on `evals create`**
 The spec doesn't validate. Run the local validator to get the field path:

@@ -12,11 +12,13 @@ promotes it.
 ## Do this
 
 ```bash
-./.claude/skills/publish-agent/scripts/publish.sh <agent-dir-name>
+python3 .claude/skills/publish-agent/scripts/publish.py <agent-dir-name>
 ```
 
-Run it from the repo root. Report the printed `agent_id` back to the user —
-they need it for every subsequent command.
+Run it from anywhere — the script locates the repo root from its own path.
+Report the printed `agent_id` back to the user; they need it for every
+subsequent command. Set `AGENT_VERSION` to label the version yourself instead
+of taking the default UTC timestamp.
 
 ## Before you run it
 

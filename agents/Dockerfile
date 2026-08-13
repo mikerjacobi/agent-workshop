@@ -53,6 +53,19 @@ FROM --platform=$DEPLOY_PLATFORM $BASE_IMAGE AS base
 ARG AGENT_TEMPLATE_DIR
 
 USER root
+
+# Skill scripts are Python and validate their inputs and their API responses
+# with pydantic, so the runtime needs both. This layer sits above the agent
+# workspace COPY on purpose: it caches, so only the first build pays for it and
+# the edit-publish-evaluate loop stays fast.
+#
+# TODO(workshop-staff): fold this into a prebaked workshop base image so
+# participants never pay the ~60s first build. Nothing here is agent-specific.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 python3-pip \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip3 install --no-cache-dir --break-system-packages pydantic pydantic-settings
+
 COPY --from=builder ${AGENT_TEMPLATE_DIR} ${AGENT_TEMPLATE_DIR}
 # The harness init container invokes this path by convention to seed the
 # workspace onto the sandbox's shared volume.

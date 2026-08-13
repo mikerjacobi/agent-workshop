@@ -12,9 +12,13 @@ new one under the same task, so the history stays comparable.
 ## Do this
 
 ```bash
-./.claude/skills/run-eval/scripts/run.sh <agent-dir-name>            # all tasks
-./.claude/skills/run-eval/scripts/run.sh <agent-dir-name> <file>     # one task file
+python3 .claude/skills/run-eval/scripts/run.py <agent-dir-name>
+python3 .claude/skills/run-eval/scripts/run.py <agent-dir-name> --tasks recent-activity refuses-prediction
 ```
+
+Omit `--tasks` to run every file in the agent's `evals/`. The names are task
+file names, with or without `.json`. `EVAL_TIMEOUT_SEC` and
+`EVAL_POLL_INTERVAL_SEC` tune the wait; the defaults are 1800 and 10.
 
 Run it from the repo root. The agent has to be published first — the run
 executes against the agent's **current version**, so publish, then evaluate.

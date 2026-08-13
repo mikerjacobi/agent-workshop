@@ -39,8 +39,8 @@ in Claude Code and ask in plain language; the right one loads itself. Each
 wraps a script you can also run yourself:
 
 ```bash
-./.claude/skills/publish-agent/scripts/publish.sh <agent>
-./.claude/skills/run-eval/scripts/run.sh <agent>
+python3 .claude/skills/publish-agent/scripts/publish.py <agent>
+python3 .claude/skills/run-eval/scripts/run.py <agent>
 python3 .claude/skills/author-eval/scripts/validate.py agents/<agent>/evals
 ```
 
@@ -63,11 +63,42 @@ a full field reference, worked query examples, a table of error codes — in
 `references/` and link to it from `SKILL.md`, so the agent pulls it in only
 when the situation calls for it.
 
+### Scripts are Python, and typed
+
+Every script in this repo — agent-side and helper — follows the same three
+rules. They are not style preferences; each one prevents a class of failure
+that is expensive to debug through an agent.
+
+1. **pydantic models at every interface.** No raw dicts crossing a function
+   boundary, in either direction. The one exception is the line that feeds a
+   model into an HTTP call or validates a response out of one.
+2. **`pydantic-settings` for the CLI.** A `BaseModel` (or `BaseSettings`) with
+   `CliApp.run`, so `--help` is generated from the same fields that validate
+   the input, and defaults can come from the environment. Never `argparse`.
+3. **No early exits.** Nothing calls `sys.exit()` mid-flow. Failures raise a
+   custom exception deriving from one base, and exactly one handler in `main`
+   turns that into a message and an exit code.
+
+`agents/quake-watch/skills/usgs-quakes/scripts/quakes.py` is the reference.
+Its response models are the argument for the whole convention: the USGS feed
+puts origin time in epoch *milliseconds* and hides depth as the third element
+of a `[lon, lat, depth]` array. Typing those into `QuakeProperties` and
+`QuakeGeometry` means each trap is gotten wrong once, in one place, instead of
+every time an agent reads the JSON.
+
+Agent-side scripts get `pydantic` and `pydantic-settings` from the image;
+`agents/Dockerfile` installs them in a cached layer above the workspace copy.
+
+Inline `curl` plus `jq` is still right for a one-off call the agent makes
+directly. Reach for a script when there is a response shape worth typing.
+
+### Path rules
+
 **Write script paths from the workspace root, not relatively.** An agent's
 working directory is the workspace, and a skill authored at
 `agents/my-agent/skills/my-skill/` lands at `.claude/skills/my-skill/` inside
 it. So `SKILL.md` should say
-`.claude/skills/my-skill/scripts/thing.sh`, not `./scripts/thing.sh` — the
+`.claude/skills/my-skill/scripts/thing.py`, not `./scripts/thing.py` — the
 relative form only resolves if the agent happens to have changed directory
 first. Give a `curl` fallback too, so a moved script degrades instead of
 blocking. `agents/quake-watch/skills/usgs-quakes/SKILL.md` does both.
