@@ -22,7 +22,7 @@ This is not a CLI tutorial. The CLI is here so the loop can actually close.
 ## Start here
 
 ```bash
-git clone https://github.com/VulcanSkylight/agent-workshop.git
+git clone https://github.com/mikerjacobi/agent-workshop.git
 cd agent-workshop
 pip install -e cli/mothership-client -e cli/mothership-cli
 ```

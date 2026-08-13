@@ -23,7 +23,7 @@ Steps 1 and 3 are mostly waiting. Read ahead while they run.
 You need `git`, `docker` (running), `python3` 3.12 or newer, and `jq`.
 
 ```bash
-git clone https://github.com/VulcanSkylight/agent-workshop.git
+git clone https://github.com/mikerjacobi/agent-workshop.git
 cd agent-workshop
 pip install -e cli/mothership-client -e cli/mothership-cli
 ```
@@ -54,9 +54,10 @@ export MOTHERSHIP_IMAGE_REGISTRY=<value from the workshop staff>
 ```
 
 > **TODO(workshop-staff):** replace the two placeholders above before the
-> session — the `git clone` URL if the repo lands elsewhere, and the registry
-> value. Also confirm participants arrive with `~/.mothership/config.json`
-> already written and the registry credential already in their Docker config.
+> session — the `git clone` URL (this lives under `mikerjacobi` for now and is
+> expected to move to the `VulcanSkylight` org), and the registry value. Also
+> confirm participants arrive with `~/.mothership/config.json` already
+> written and the registry credential already in their Docker config.
 > Every minute of the 20 spent on auth is a minute not spent on the lifecycle.
 
 ---
