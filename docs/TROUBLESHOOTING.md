@@ -136,7 +136,7 @@ same model that just refused the input.
 The spec doesn't validate. Run the local validator to get the field path:
 
 ```bash
-python3 .claude/skills/author-eval/scripts/validate.py agents/<name>/evals
+python3 skills/author-eval/scripts/validate.py agents/<name>/evals
 ```
 
 Common causes: a `slug` that isn't kebab-case, an `agent_id` left in the file

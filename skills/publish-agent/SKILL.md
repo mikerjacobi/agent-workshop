@@ -12,7 +12,7 @@ promotes it.
 ## Do this
 
 ```bash
-python3 .claude/skills/publish-agent/scripts/publish.py <agent-dir-name>
+python3 skills/publish-agent/scripts/publish.py <agent-dir-name>
 ```
 
 Run it from anywhere — the script locates the repo root from its own path.

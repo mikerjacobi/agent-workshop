@@ -3,7 +3,7 @@
 Idempotent: the first run registers the agent, every run after that mints a
 version and promotes it.
 
-    python3 .claude/skills/publish-agent/scripts/publish.py hello-world
+    python3 skills/publish-agent/scripts/publish.py hello-world
 
 Requires docker, and the vendored CLI installed so a configured Mothership
 profile resolves:
@@ -66,6 +66,27 @@ class PlatformRejected(PublishError):
 
 class ProfileNotResolved(PublishError):
     """No usable Mothership profile — nothing can be published."""
+
+
+class RepoRootNotFound(PublishError):
+    """The script is not inside an agent-workshop checkout."""
+
+
+def find_repo_root() -> Path:
+    """Walk up from this file to the checkout root.
+
+    Counting parents breaks whenever a script moves a directory, and it breaks
+    silently — the wrong root just reports every agent as missing. Look for the
+    marker directories instead. ``resolve()`` first so invoking through the
+    ``.claude/skills`` symlink lands on the real path.
+    """
+    for candidate in Path(__file__).resolve().parents:
+        if (candidate / "agents").is_dir() and (candidate / "cli").is_dir():
+            return candidate
+    raise RepoRootNotFound(
+        f"could not find the agent-workshop root above {Path(__file__).resolve()} "
+        "(expected a directory containing both agents/ and cli/)"
+    )
 
 
 class PublishSettings(BaseSettings):
@@ -319,7 +340,7 @@ class Publish(BaseModel):
     agent: CliPositionalArg[str] = Field(description="Directory name under agents/, e.g. hello-world")
 
     def cli_cmd(self) -> None:
-        repo_root = Path(__file__).resolve().parents[4]
+        repo_root = find_repo_root()
         print(publish(repo_root, self.agent, PublishSettings()).render())
 
 

@@ -66,16 +66,24 @@ takes it from there:
 > use publish-agent on my-agent
 ```
 
-## Reusing a skill
+## Adding a skill
 
-Skills are files. Copy one in:
+Skills are files. Start from the template, or copy one from another agent:
 
 ```bash
-cp -r skills/http-json agents/my-agent/skills/
+cp -r agents/_template/skills/example-skill agents/my-agent/skills/my-skill
+cp -r agents/quake-watch/skills/geocode agents/my-agent/skills/geocode
 ```
 
-The build dereferences symlinks (`cp -rL`), so a relative symlink works too if
-you'd rather track the original.
+Then add it to the table in your agent's `CLAUDE.md` — a skill the agent
+doesn't know exists will never be invoked.
+
+The build dereferences symlinks (`cp -rL`), so if two agents should share one
+skill, a relative symlink works and keeps a single copy under source control.
+
+These are the agent's own skills, not the ones in the repo's top-level
+`skills/` — those are read by Claude Code to drive the dev loop and never
+reach the image. See [`skills/README.md`](../skills/README.md).
 
 ## agent.json
 

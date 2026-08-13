@@ -12,8 +12,8 @@ new one under the same task, so the history stays comparable.
 ## Do this
 
 ```bash
-python3 .claude/skills/run-eval/scripts/run.py <agent-dir-name>
-python3 .claude/skills/run-eval/scripts/run.py <agent-dir-name> --tasks recent-activity refuses-prediction
+python3 skills/run-eval/scripts/run.py <agent-dir-name>
+python3 skills/run-eval/scripts/run.py <agent-dir-name> --tasks recent-activity refuses-prediction
 ```
 
 Omit `--tasks` to run every file in the agent's `evals/`. The names are task
@@ -26,7 +26,7 @@ executes against the agent's **current version**, so publish, then evaluate.
 Validate the task files locally first; it costs nothing and saves a round trip:
 
 ```bash
-python3 .claude/skills/author-eval/scripts/validate.py agents/<name>/evals
+python3 skills/author-eval/scripts/validate.py agents/<name>/evals
 ```
 
 ## What to expect

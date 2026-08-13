@@ -85,7 +85,7 @@ change `"slug"` to something like `"jsmith-hello-world"`.
 Then publish:
 
 ```bash
-python3 .claude/skills/publish-agent/scripts/publish.py hello-world
+python3 skills/publish-agent/scripts/publish.py hello-world
 ```
 
 Or, in Claude Code, just say: **"publish the hello-world agent"**.
@@ -146,8 +146,8 @@ highest-weighted criterion is a **binary** one: did it decline, yes or no.
 Check them locally, then run:
 
 ```bash
-python3 .claude/skills/author-eval/scripts/validate.py agents/hello-world/evals
-python3 .claude/skills/run-eval/scripts/run.py hello-world
+python3 skills/author-eval/scripts/validate.py agents/hello-world/evals
+python3 skills/run-eval/scripts/run.py hello-world
 ```
 
 Or say: **"run the evals for hello-world"**.
@@ -185,8 +185,8 @@ easiest first:
 Change **one** thing. Then:
 
 ```bash
-python3 .claude/skills/publish-agent/scripts/publish.py hello-world
-python3 .claude/skills/run-eval/scripts/run.py hello-world
+python3 skills/publish-agent/scripts/publish.py hello-world
+python3 skills/run-eval/scripts/run.py hello-world
 mothership evals report --run-id <new_run_id> --previous $BASELINE
 ```
 
@@ -217,7 +217,7 @@ The template's comments walk you through each file. The order that works:
    harder and they are what makes it an agent.
 3. **`USER.md`** — one paragraph on who it serves.
 4. **One skill.** Start with a public API and no auth. Copy
-   `skills/http-json` as the starting shape.
+   `agents/_template/skills/example-skill/` as the starting shape.
 5. **`CLAUDE.md`** — list the skill in the table. A skill the agent doesn't
    know about will never be invoked; this is the single most common bug.
 6. **Two evals** — one that tests the job, one that tests the refusal.

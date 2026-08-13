@@ -4,8 +4,8 @@ Idempotent: a task file whose slug already exists is updated in place, so
 editing a rubric and re-running re-scores against the new one under the same
 task and the history stays comparable.
 
-    python3 .claude/skills/run-eval/scripts/run.py quake-watch
-    python3 .claude/skills/run-eval/scripts/run.py quake-watch --tasks recent-activity
+    python3 skills/run-eval/scripts/run.py quake-watch
+    python3 skills/run-eval/scripts/run.py quake-watch --tasks recent-activity
 
 Requires the vendored CLI installed so a configured Mothership profile resolves:
 
@@ -73,6 +73,27 @@ class RunTimedOut(RunEvalError):
     """The run did not reach a terminal status inside the wait budget."""
 
 
+class RepoRootNotFound(RunEvalError):
+    """The script is not inside an agent-workshop checkout."""
+
+
+def find_repo_root() -> Path:
+    """Walk up from this file to the checkout root.
+
+    Counting parents breaks whenever a script moves a directory, and it breaks
+    silently — the wrong root just reports every agent as missing. Look for the
+    marker directories instead. ``resolve()`` first so invoking through the
+    ``.claude/skills`` symlink lands on the real path.
+    """
+    for candidate in Path(__file__).resolve().parents:
+        if (candidate / "agents").is_dir() and (candidate / "cli").is_dir():
+            return candidate
+    raise RepoRootNotFound(
+        f"could not find the agent-workshop root above {Path(__file__).resolve()} "
+        "(expected a directory containing both agents/ and cli/)"
+    )
+
+
 class RunSettings(BaseSettings):
     """Environment overrides for the poll loop. Each task provisions its own
     sandbox, runs the agent, then judges the response — minutes, not seconds."""
@@ -116,7 +137,7 @@ class TaskFile(BaseModel):
             raise TaskFileInvalid(
                 f"{path} does not validate:\n  {fields}\n\n"
                 "Run the validator for the same check without a round trip:\n"
-                "  python3 .claude/skills/author-eval/scripts/validate.py <path>"
+                "  python3 skills/author-eval/scripts/validate.py <path>"
             ) from exc
         return cls(path=path, document=document)
 
@@ -206,7 +227,7 @@ def resolve_agent(client: MothershipClient, slug: str) -> AgentRef:
     if not agents:
         raise AgentNotPublished(
             f"agent '{slug}' is not in the catalog — publish it first:\n"
-            f"  python3 .claude/skills/publish-agent/scripts/publish.py <agent-dir>"
+            f"  python3 skills/publish-agent/scripts/publish.py <agent-dir>"
         )
     return AgentRef(slug=slug, agent_id=agents[0].agent_id)
 
@@ -326,7 +347,7 @@ class RunEval(BaseModel):
     tasks: list[str] = Field(default_factory=list, description="Task file names to run; omit for all of them")
 
     def cli_cmd(self) -> None:
-        repo_root = Path(__file__).resolve().parents[4]
+        repo_root = find_repo_root()
         print(run_evals(repo_root, self.agent, self.tasks, RunSettings()).render())
 
 

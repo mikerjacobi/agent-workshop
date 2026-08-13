@@ -40,9 +40,15 @@ Then:
 agent-workshop/
 ├── docs/       architecture, the walkthrough, troubleshooting
 ├── cli/        the mothership CLI, vendored so this repo stands alone
-├── agents/     one directory per agent — persona, skills, evals
-└── skills/     library/ = skills for your agent, workshop/ = skills for you
+├── agents/     one directory per agent — persona, its own skills, its evals
+└── skills/     the Mothership interactions: publish, evaluate, author, debug
 ```
+
+Skills appear in two places and the split is by **reader**: `skills/` is read
+by Claude Code on your laptop to drive the dev loop, `agents/<name>/skills/`
+is read by the agent you built, running in a sandbox. `.claude/skills` is a
+symlink to `skills/` — Claude Code only scans that path, and that symlink is
+the only reason `.claude/` exists.
 
 ## What's in an agent
 
@@ -66,7 +72,7 @@ own.
 ## The dev loop
 
 Open the repo in Claude Code and ask in plain language — the helper skills in
-[`.claude/skills/`](.claude/skills/) load themselves:
+[`skills/`](skills/) load themselves:
 
 > publish the hello-world agent
 > run its evals
@@ -75,9 +81,9 @@ Open the repo in Claude Code and ask in plain language — the helper skills in
 Or run the same scripts directly:
 
 ```bash
-python3 .claude/skills/publish-agent/scripts/publish.py hello-world
-python3 .claude/skills/run-eval/scripts/run.py hello-world
-python3 .claude/skills/author-eval/scripts/validate.py agents/hello-world/evals
+python3 skills/publish-agent/scripts/publish.py hello-world
+python3 skills/run-eval/scripts/run.py hello-world
+python3 skills/author-eval/scripts/validate.py agents/hello-world/evals
 ```
 
 Nothing is hidden. Each skill wraps a script you can read.

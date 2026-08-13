@@ -1,51 +1,45 @@
 # skills/
 
-A library of agent skills to copy into an agent. They are files; copy them.
+The Mothership interaction skills — the dev loop, wrapped so you don't have to
+hold the docker-build, catalog-registration, version-promotion,
+sandbox-recycling sequence in your head.
+
+| Skill | Ask for it by saying | What it wraps |
+|-------|----------------------|---------------|
+| `publish-agent` | "publish my agent", "ship this change" | `scripts/publish.py` |
+| `run-eval` | "run the evals", "did that make it better?" | `scripts/run.py` |
+| `author-eval` | "write an eval for this", "add a test" | `scripts/validate.py` |
+| `mothership-cli` | "why did that command fail?" | reference only, no script |
+
+Open the repo in Claude Code and ask in plain language; the right one loads
+itself. Or run the scripts directly — nothing is hidden:
 
 ```bash
-cp -r skills/http-json agents/my-agent/skills/
+python3 skills/publish-agent/scripts/publish.py <agent>
+python3 skills/run-eval/scripts/run.py <agent>
+python3 skills/author-eval/scripts/validate.py agents/<agent>/evals
 ```
 
-Then add the skill to the table in your agent's `CLAUDE.md`. A skill the agent
-doesn't know exists will never be invoked — that is the single most common
-bug in this repo.
-
-| Skill | What it covers |
-|-------|----------------|
-| `http-json` | Driving a JSON REST API with curl and jq: auth, status codes, pagination, rate limits. Start here when wrapping a new API. |
-| `time` | Current time and timezone conversion via an MCP server. The worked example of the MCP registration pattern. |
-
-More live inside the example agents — `agents/hello-world/skills/` and
-`agents/quake-watch/skills/` — because a skill written against a specific
-agent's job is usually better than a generic one.
+> `.claude/skills` is a symlink to this directory. It is the only path Claude
+> Code scans for skills, and the symlink is the whole reason `.claude/`
+> exists. Delete it and the scripts still work; you just have to name them
+> yourself instead of asking in plain language.
 
 ## The other skills directory
 
-`.claude/skills/` at the repo root holds a different thing, and confusing the
-two is easy. Both are Markdown files with the same shape. What differs is
-**who reads them**.
+`agents/<name>/skills/` holds skills belonging to **that agent** — the
+procedures it loads at runtime, baked into its image. Same file format,
+different reader.
 
-| | `skills/` (here) | `.claude/skills/` (repo root) |
+| | `skills/` (here) | `agents/<name>/skills/` |
 |---|---|---|
-| Read by | The agent you built, running in a sandbox | Claude Code, on your laptop |
-| Gets there via | You copy it into `agents/<name>/skills/` | Already there |
-| Ships in the image | Yes | No |
-| Example | "how to query a satellite catalog" | "how to publish an agent" |
+| Read by | Claude Code, on your laptop | The agent you built, in a sandbox |
+| Purpose | Drive the dev loop | Do the agent's job |
+| Ships in the image | No | Yes |
+| Example | "how to publish an agent" | "how to query the USGS catalog" |
 
-The helper skills — `publish-agent`, `author-eval`, `run-eval`,
-`mothership-cli` — keep the docker-build, catalog-registration,
-version-promotion, sandbox-recycling sequence out of your head. Open the repo
-in Claude Code and ask in plain language; the right one loads itself. Each
-wraps a script you can also run yourself:
-
-```bash
-python3 .claude/skills/publish-agent/scripts/publish.py <agent>
-python3 .claude/skills/run-eval/scripts/run.py <agent>
-python3 .claude/skills/author-eval/scripts/validate.py agents/<agent>/evals
-```
-
-Nothing is hidden — read the script the skill calls if you want to know
-exactly what happened.
+Start a new agent skill from `agents/_template/skills/example-skill/SKILL.md`,
+which has the full structure with prompts for each section.
 
 ## Skill directory layout
 
@@ -58,16 +52,16 @@ Both kinds use the same structure:
 └── references/    optional — detail loaded only when needed
 ```
 
-`SKILL.md` is what gets read first. Put anything long and situational —
-a full field reference, worked query examples, a table of error codes — in
-`references/` and link to it from `SKILL.md`, so the agent pulls it in only
-when the situation calls for it.
+`SKILL.md` is read first. Put anything long and situational — a full field
+reference, worked query examples, a table of error codes — in `references/`
+and link to it from `SKILL.md`, so it is pulled in only when the situation
+calls for it. `agents/quake-watch/skills/usgs-quakes/` uses all three.
 
-### Scripts are Python, and typed
+## Scripts are Python, and typed
 
-Every script in this repo — agent-side and helper — follows the same three
-rules. They are not style preferences; each one prevents a class of failure
-that is expensive to debug through an agent.
+Every script in this repo — agent-side and here — follows the same four
+rules. They are not style preferences; each prevents a class of failure that
+is expensive to debug through an agent.
 
 1. **pydantic models at every interface.** No raw dicts crossing a function
    boundary, in either direction. The one exception is the line that feeds a
@@ -79,9 +73,9 @@ that is expensive to debug through an agent.
    custom exception deriving from one base, and exactly one handler in `main`
    turns that into a message and an exit code.
 4. **Types are real, and checked.** No `TYPE_CHECKING` blocks, no deferred
-   imports that exist only to make an error message prettier, no `x: type`
-   holders the checker can't see through. `mypy` runs strict over
-   `.claude/skills` and `agents`, configured in the root `pyproject.toml`:
+   imports that exist only to prettify an error message, no `x: type` holders
+   the checker can't see through. `mypy` runs strict over `skills` and
+   `agents`, configured in the root `pyproject.toml`:
 
    ```bash
    pip install mypy && mypy
@@ -95,26 +89,14 @@ that is expensive to debug through an agent.
 `agents/quake-watch/skills/usgs-quakes/scripts/quakes.py` is the reference.
 Its response models are the argument for the whole convention: the USGS feed
 puts origin time in epoch *milliseconds* and hides depth as the third element
-of a `[lon, lat, depth]` array. Typing those into `QuakeProperties` and
-`QuakeGeometry` means each trap is gotten wrong once, in one place, instead of
-every time an agent reads the JSON.
+of a `[lon, lat, depth]` array. Typing those means each trap is gotten wrong
+once, in one place, instead of every time an agent reads the JSON.
 
 Agent-side scripts get `pydantic` and `pydantic-settings` from the image;
 `agents/Dockerfile` installs them in a cached layer above the workspace copy.
 
-Inline `curl` plus `jq` is still right for a one-off call the agent makes
+Inline `curl` plus `jq` is still right for a one-off call an agent makes
 directly. Reach for a script when there is a response shape worth typing.
-
-### Path rules
-
-**Write script paths from the workspace root, not relatively.** An agent's
-working directory is the workspace, and a skill authored at
-`agents/my-agent/skills/my-skill/` lands at `.claude/skills/my-skill/` inside
-it. So `SKILL.md` should say
-`.claude/skills/my-skill/scripts/thing.py`, not `./scripts/thing.py` — the
-relative form only resolves if the agent happens to have changed directory
-first. Give a `curl` fallback too, so a moved script degrades instead of
-blocking. `agents/quake-watch/skills/usgs-quakes/SKILL.md` does both.
 
 ## Writing a good skill
 
@@ -130,6 +112,9 @@ Same advice for both kinds:
   from improvising past its data is the one that makes it trustworthy.
 - **Say what failure looks like** and what to report. An empty result is often
   a valid answer; a 500 never is.
-
-`agents/_template/skills/example-skill/SKILL.md` has the full structure with
-prompts for each section.
+- **Write script paths from the workspace root.** A skill authored at
+  `agents/my-agent/skills/my-skill/` lands at `.claude/skills/my-skill/` inside
+  the running agent's workspace, so say
+  `.claude/skills/my-skill/scripts/thing.py`, not `./scripts/thing.py` — the
+  relative form only resolves if the agent already changed directory. Give a
+  `curl` fallback so a moved script degrades instead of blocking.

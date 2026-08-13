@@ -17,3 +17,7 @@ venv/
 *.swp
 .idea/
 .vscode/
+
+# Tooling caches
+.mypy_cache/
+.ruff_cache/
