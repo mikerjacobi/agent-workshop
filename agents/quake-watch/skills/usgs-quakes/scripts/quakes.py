@@ -20,7 +20,7 @@ import urllib.parse
 import urllib.request
 from datetime import UTC, datetime, timedelta
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, ValidationError, computed_field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, ValidationError
 from pydantic_settings import BaseSettings, CliApp, SettingsConfigDict
 
 USGS_QUERY_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query"
@@ -64,7 +64,6 @@ class QuakeProperties(BaseModel):
     status: str = Field(default="automatic", description="'automatic' magnitudes can still change")
     type: str = Field(default="earthquake", description="Also 'quarry blast', 'explosion', 'ice quake'")
 
-    @computed_field
     @property
     def origin_time(self) -> datetime:
         """The trap this model exists for: epoch milliseconds, not seconds.
@@ -81,17 +80,14 @@ class QuakeGeometry(BaseModel):
 
     coordinates: list[float] = Field(min_length=3, max_length=3)
 
-    @computed_field
     @property
     def longitude(self) -> float:
         return self.coordinates[0]
 
-    @computed_field
     @property
     def latitude(self) -> float:
         return self.coordinates[1]
 
-    @computed_field
     @property
     def depth_km(self) -> float:
         return self.coordinates[2]
@@ -187,7 +183,8 @@ def fetch(search: QuakeSearch) -> str:
     try:
         # noqa: S310 — the host is a fixed https literal, not caller-supplied.
         with urllib.request.urlopen(url, timeout=EARTH_REQUEST_TIMEOUT_SEC) as response:
-            return response.read().decode()
+            payload: bytes = response.read()
+        return payload.decode()
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode(errors="replace").strip().splitlines()
         raise UpstreamRejected(

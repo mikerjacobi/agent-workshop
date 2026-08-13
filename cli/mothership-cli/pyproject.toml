@@ -29,3 +29,8 @@ mothership = "mothership_cli.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+# PEP 561 marker so type checkers read these annotations instead of treating
+# every model as Any. Added for the workshop; not present upstream.
+"mothership_cli" = ["py.typed"]

@@ -1,0 +1,22 @@
+# Tooling config only — this repo ships no Python package of its own. The two
+# installable packages live under cli/ with their own pyproject.toml files.
+
+[tool.mypy]
+python_version = "3.12"
+files = [".claude/skills", "agents"]
+strict = true
+# Skill scripts are standalone files run by path, not an importable package,
+# and several share a module name (main, fetch). Check them independently.
+scripts_are_modules = true
+follow_imports = "silent"
+pretty = true
+
+[[tool.mypy.overrides]]
+# pydantic-settings ships types, but CliApp.run's return is intentionally
+# loose; the scripts never use its value.
+module = "pydantic_settings.*"
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"

@@ -44,10 +44,10 @@ page:
 
 ## Divergence from upstream
 
-Upstream is `VulcanSkylight/mothership`, `packages/python/`. This copy is
-identical except that `harbor` — the local eval runner's dependency — moved
-from a required dependency to an optional extra, so the CLI installs without
-access to it:
+Upstream is `VulcanSkylight/mothership`, `packages/python/`. Two changes:
+
+**1. `harbor` is an optional extra, not a required dependency.** The local eval
+runner needs it; nothing else does, so the CLI installs without access to it:
 
 ```bash
 pip install -e 'cli/mothership-cli[local-runner]'   # only if you want `evals run-local`
@@ -55,6 +55,12 @@ pip install -e 'cli/mothership-cli[local-runner]'   # only if you want `evals ru
 
 Everything except `mothership evals run-local` works without it. The workshop
 runs evals on the platform executor and does not need it.
+
+**2. Both packages ship a PEP 561 `py.typed` marker.** Without it a type
+checker treats every import from these packages as `Any` — so a script can
+pass a strict `mypy` run while every model in it is silently unchecked. The
+packages are fully annotated pydantic; the marker just says so. Worth
+upstreaming.
 
 > **TODO(workshop-staff):** this is a point-in-time copy of CLI `0.6.0`. If the
 > upstream CLI changes before the session, re-vendor from

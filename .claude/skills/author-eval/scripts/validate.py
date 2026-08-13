@@ -16,13 +16,11 @@ import json
 import sys
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from mothership_client.models.eval_spec import EvalTaskSpec, InlineCriterion, LLMJudgeScorer
+from mothership_client.models.eval_task import CreateEvalTaskInput
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic_settings import CliApp, CliPositionalArg
-
-if TYPE_CHECKING:
-    from mothership_client.models.eval_spec import EvalTaskSpec
 
 # Task files on disk carry no agent_id — run.py injects it from agent.json at
 # sync time — so validation supplies a placeholder to satisfy the model.
@@ -32,10 +30,6 @@ MIN_RUBRIC_CHARS = 60
 
 class ValidateError(Exception):
     """Base for every failure this script raises. Handled once, in ``main``."""
-
-
-class MissingDependency(ValidateError):
-    """The vendored mothership-client package is not importable."""
 
 
 class PathNotFound(ValidateError):
@@ -109,28 +103,6 @@ class ValidationReport(BaseModel):
         return "\n".join(report.render() for report in self.files)
 
 
-class EvalModels(BaseModel):
-    """The platform model classes, imported lazily so a missing dependency
-    surfaces as a ValidateError rather than an import-time traceback."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-
-    create_input: type
-    task_spec: type
-
-    @classmethod
-    def load(cls) -> EvalModels:
-        try:
-            from mothership_client.models.eval_spec import EvalTaskSpec
-            from mothership_client.models.eval_task import CreateEvalTaskInput
-        except ImportError as exc:
-            raise MissingDependency(
-                "mothership-client is not installed. From the repo root:\n"
-                "  pip install -e cli/mothership-client -e cli/mothership-cli"
-            ) from exc
-        return cls(create_input=CreateEvalTaskInput, task_spec=EvalTaskSpec)
-
-
 def collect_task_files(paths: list[str]) -> list[Path]:
     """Expand directories to the .json files inside them, keeping file paths as given."""
     collected: list[Path] = []
@@ -148,7 +120,9 @@ def lint_spec(spec: EvalTaskSpec) -> list[Problem]:
     """Warnings the schema permits but that make an eval score inconsistently."""
     problems: list[Problem] = []
     for index, scorer in enumerate(spec.scorers):
-        if scorer.kind != "llm_judge":
+        # isinstance, not a kind string: it narrows the union so .reference and
+        # .criteria below are checked rather than assumed.
+        if not isinstance(scorer, LLMJudgeScorer):
             continue
         if not scorer.reference:
             problems.append(
@@ -159,8 +133,9 @@ def lint_spec(spec: EvalTaskSpec) -> list[Problem]:
                 )
             )
         for criterion_index, criterion in enumerate(scorer.criteria):
-            rubric = getattr(criterion, "rubric", None)
-            if rubric is not None and len(rubric) < MIN_RUBRIC_CHARS:
+            # A CriterionRef points at a shared template and carries no rubric
+            # to lint; only inline criteria have one.
+            if isinstance(criterion, InlineCriterion) and len(criterion.rubric) < MIN_RUBRIC_CHARS:
                 problems.append(
                     Problem(
                         severity=Severity.WARNING,
@@ -171,7 +146,7 @@ def lint_spec(spec: EvalTaskSpec) -> list[Problem]:
     return problems
 
 
-def check_task_file(path: Path, models: EvalModels) -> FileReport:
+def check_task_file(path: Path) -> FileReport:
     """Validate one task file and collect every problem with it."""
     try:
         document = json.loads(path.read_text())
@@ -187,7 +162,7 @@ def check_task_file(path: Path, models: EvalModels) -> FileReport:
         return FileReport(path=path, problems=[problem])
 
     try:
-        models.create_input(agent_id=PLACEHOLDER_AGENT_ID, **document)
+        CreateEvalTaskInput(agent_id=PLACEHOLDER_AGENT_ID, **document)
     except ValidationError as exc:
         problems = [
             Problem(
@@ -201,13 +176,12 @@ def check_task_file(path: Path, models: EvalModels) -> FileReport:
     except TypeError as exc:
         return FileReport(path=path, problems=[Problem(severity=Severity.ERROR, message=str(exc))])
 
-    return FileReport(path=path, problems=lint_spec(models.task_spec.model_validate(document["spec"])))
+    return FileReport(path=path, problems=lint_spec(EvalTaskSpec.model_validate(document["spec"])))
 
 
 def validate(paths: list[str]) -> ValidationReport:
     """Check every task file the paths resolve to."""
-    models = EvalModels.load()
-    return ValidationReport(files=[check_task_file(path, models) for path in collect_task_files(paths)])
+    return ValidationReport(files=[check_task_file(path) for path in collect_task_files(paths)])
 
 
 class Validate(BaseModel):

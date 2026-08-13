@@ -78,6 +78,19 @@ that is expensive to debug through an agent.
 3. **No early exits.** Nothing calls `sys.exit()` mid-flow. Failures raise a
    custom exception deriving from one base, and exactly one handler in `main`
    turns that into a message and an exit code.
+4. **Types are real, and checked.** No `TYPE_CHECKING` blocks, no deferred
+   imports that exist only to make an error message prettier, no `x: type`
+   holders the checker can't see through. `mypy` runs strict over
+   `.claude/skills` and `agents`, configured in the root `pyproject.toml`:
+
+   ```bash
+   pip install mypy && mypy
+   ```
+
+   A rule that is only asserted is not a rule. That check is also why the
+   vendored packages in `cli/` carry a `py.typed` marker — without it every
+   model imported from them is `Any`, and a strict run passes while checking
+   nothing.
 
 `agents/quake-watch/skills/usgs-quakes/scripts/quakes.py` is the reference.
 Its response models are the argument for the whole convention: the USGS feed
