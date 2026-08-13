@@ -1,0 +1,41 @@
+{
+  "slug": "change-me-example-task",
+  "description": "One sentence: what behavior this task holds the agent to.",
+  "tags": ["smoke"],
+  "spec": {
+    "stimulus": {
+      "kind": "prompt",
+      "instruction": "The message to send the agent. Write it the way a real user would, not the way a test would."
+    },
+    "scorers": [
+      {
+        "kind": "artifact_gate",
+        "checks": [
+          { "check": "min_length", "file": "response.md", "value": 40 }
+        ]
+      },
+      {
+        "kind": "llm_judge",
+        "weight": 1.0,
+        "reference": "Ground truth for the judge. Put the correct answer here, plus the tolerances — what counts as close enough, what is definitely wrong, and what an honest 'I can't do that' looks like. The judge only knows what this field tells it.",
+        "criteria": [
+          {
+            "name": "did_the_thing",
+            "rubric": "One question the judge answers about the response. Say what full marks looks like and what zero looks like, concretely. Vague rubrics produce noisy scores.",
+            "criterion_type": "binary",
+            "points": 2,
+            "weight": 2.0
+          },
+          {
+            "name": "quality_of_the_thing",
+            "rubric": "A second question, on a graded scale. Likert criteria are for 'how well', binary for 'did it at all'.",
+            "criterion_type": "likert",
+            "points": 5,
+            "weight": 1.0
+          }
+        ]
+      }
+    ],
+    "timeout_sec": 600
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "slug": "hello-world",
+  "name": "Hello World",
+  "description": "Minimal workshop agent: reports the current position of the ISS.",
+  "harness": "openclaw",
+  "default_model": "litellm/opus-4.6",
+  "parameters": []
+}

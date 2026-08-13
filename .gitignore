@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Never commit credentials or connection config — it lives in ~/.mothership/
+.mothership/
+*.env
+.env
+
+# Editors / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/

@@ -1,0 +1,52 @@
+# Builds one agent workspace into a runnable harness image.
+#
+# The build context is this directory (`agents/`), so each top-level child
+# is one agent's self-contained workspace. Nothing in here is agent-specific —
+# you should never need to edit this file to ship your own agent.
+#
+#   cd agents
+#   docker build --build-arg AGENT=hello-world -t hello-world:dev .
+#
+# The `publish-agent` skill runs this for you. See docs/ARCHITECTURE.md for
+# what the layers mean.
+
+# TODO(workshop-staff): pin BASE_IMAGE to a digest before the workshop so a
+# floating upstream tag can't change what participants build. Confirm the tag
+# below is readable from wherever participants build (it is public today).
+ARG BASE_IMAGE=ghcr.io/vulcanskylight/mothership/openclaw-mothership:latest
+ARG AGENT
+ARG AGENT_TEMPLATE_DIR=/etc/agent
+# Deploy target is amd64. Override with --platform=linux/arm64 for a local
+# native build on Apple silicon (faster, but only runnable locally).
+ARG DEPLOY_PLATFORM=linux/amd64
+
+# ── Builder: stage the agent workspace ───────────────────────────────────
+FROM --platform=$DEPLOY_PLATFORM $BASE_IMAGE AS builder
+
+ARG AGENT
+ARG AGENT_TEMPLATE_DIR
+
+USER root
+
+RUN test -n "$AGENT" || (echo "AGENT build arg is required: docker build --build-arg AGENT=<dir>" && exit 1)
+
+COPY . /tmp/build/
+RUN test -d "/tmp/build/${AGENT}" || (echo "agent '${AGENT}' not found under agents/" && exit 1) \
+ && mkdir -p ${AGENT_TEMPLATE_DIR} \
+ && cp -rL /tmp/build/${AGENT}/. ${AGENT_TEMPLATE_DIR}/ \
+ && rm -f ${AGENT_TEMPLATE_DIR}/agent.json
+
+# ── Runtime: base + workspace, nothing else ──────────────────────────────
+FROM --platform=$DEPLOY_PLATFORM $BASE_IMAGE AS base
+
+ARG AGENT_TEMPLATE_DIR
+
+USER root
+COPY --from=builder ${AGENT_TEMPLATE_DIR} ${AGENT_TEMPLATE_DIR}
+# The harness init container invokes this path by convention to seed the
+# workspace onto the sandbox's shared volume.
+COPY agent-pre-start.sh /usr/local/bin/agent-pre-start.sh
+RUN chmod +x /usr/local/bin/agent-pre-start.sh
+# mcporter registers MCP servers at runtime; skills that use MCP need it.
+RUN npm install -g mcporter
+USER node

@@ -1,0 +1,8 @@
+{
+  "slug": "change-me",
+  "name": "Change Me",
+  "description": "One sentence describing what this agent is for.",
+  "harness": "openclaw",
+  "default_model": "litellm/opus-4.6",
+  "parameters": []
+}

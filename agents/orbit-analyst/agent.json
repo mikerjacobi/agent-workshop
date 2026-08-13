@@ -1,0 +1,16 @@
+{
+  "slug": "orbit-analyst",
+  "name": "Orbit Analyst",
+  "description": "Satellite catalog lookups and space-weather context for an operations analyst.",
+  "harness": "openclaw",
+  "default_model": "litellm/opus-4.6",
+  "parameters": [
+    {
+      "key": "NASA_API_KEY",
+      "label": "NASA API key",
+      "description": "Key for api.nasa.gov (DONKI space weather). DEMO_KEY is rate-limited to ~30 requests/hour per IP.",
+      "default": "DEMO_KEY",
+      "secret": false
+    }
+  ]
+}
