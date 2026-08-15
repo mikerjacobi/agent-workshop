@@ -20,7 +20,7 @@ Each of these costs a five-minute image build to discover otherwise:
 
 - `agents/<name>/agent.json` exists and `slug` is not `change-me`.
 - `slug` is unique in a shared deployment. If the user is at a workshop and it
-  isn't prefixed, suggest their name (`jsmith-hello-world`).
+  isn't prefixed, suggest their name (`jsmith-quake-watch`).
 - `SOUL.md` exists and is more than a sentence.
 - Every skill directory has a `SKILL.md` with a `description` in its
   frontmatter — that description is what makes the skill discoverable.

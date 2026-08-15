@@ -31,8 +31,9 @@ Then open **[`workshop.ipynb`](workshop.ipynb)** and run it top to bottom. It
 walks the whole loop as `mothership` commands you can read — publish an agent,
 talk to it, score it, change one thing, and prove the score moved.
 
-Read **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** first if you want the
-model before the mechanics. Ten minutes, and the rest becomes obvious.
+Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) first if you want the model
+before the mechanics, and [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+when something breaks.
 
 ## Layout
 
@@ -53,24 +54,24 @@ by the agent you built, running in a sandbox.
 Markdown. No code.
 
 ```
-agents/hello-world/
-├── SOUL.md                              mission, voice, refusals
-├── agent.json                           catalog metadata
-├── skills/iss-position/SKILL.md          one skill, loaded on demand
-└── evals/                               two tasks that hold it to the above
+agents/quake-watch/
+├── SOUL.md                     mission, audience, habits, refusals
+├── agent.json                  catalog metadata
+├── skills/
+│   ├── geocode/SKILL.md        place name to coordinates
+│   └── usgs-quakes/            SKILL.md + scripts/ + references/
+└── evals/                      three tasks that hold it to the above
 ```
 
-Two examples ship here: [`hello-world`](agents/hello-world/) (one skill, two
-evals) and [`quake-watch`](agents/quake-watch/) (two skills, two declared
-parameters, three evals). Copy [`_template/`](agents/_template/) to start your
-own.
+[`quake-watch`](agents/quake-watch/) is the worked example the notebook uses.
+Copy [`_template/`](agents/_template/) to start something of your own.
 
 ## The dev loop
 
 Open the repo in Claude Code and ask in plain language, pointing it at the
 matching skill in [`skills/`](skills/):
 
-> publish the hello-world agent
+> publish my agent
 > run its evals
 > write an eval that checks it refuses to guess pass times
 

@@ -7,8 +7,7 @@ evals that hold it to account.
 agents/
 ├── Dockerfile            builds any agent dir into a runnable image (don't edit)
 ├── agent-pre-start.sh    seeds the workspace into the sandbox at boot (don't edit)
-├── hello-world/          minimal agent — one skill, two evals
-├── quake-watch/          richer example — two skills, two parameters, three evals
+├── quake-watch/          the worked example — two skills, two parameters, three evals
 └── _template/            copy this to start your own
 ```
 
