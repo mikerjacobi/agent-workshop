@@ -27,12 +27,12 @@ cd agent-workshop
 pip install -e cli/mothership-client -e cli/mothership-cli
 ```
 
-Then:
+Then open **[`workshop.ipynb`](workshop.ipynb)** and run it top to bottom. It
+walks the whole loop as `mothership` commands you can read — publish an agent,
+talk to it, score it, change one thing, and prove the score moved.
 
-1. **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the model. Ten minutes,
-   and the rest becomes obvious.
-2. **[docs/WORKSHOP.md](docs/WORKSHOP.md)** — the walkthrough. Clone to a
-   published, evaluated agent in twenty minutes.
+Read **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** first if you want the
+model before the mechanics. Ten minutes, and the rest becomes obvious.
 
 ## Layout
 
