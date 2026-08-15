@@ -17,7 +17,7 @@
       {
         "kind": "llm_judge",
         "weight": 1.0,
-        "reference": "Grade the method, not a specific event list. This task runs against a live feed, so which earthquakes are in the window changes daily and no fixed answer can be checked. What can be checked: Anchorage, Alaska is at roughly 61.22N, 149.90W; the agent should have geocoded it and searched the USGS catalog around that point. South-central Alaska is seismically busy — a week typically contains several M2.5-M4 events, and zero events above the magnitude floor is possible but uncommon. Depth in this region ranges from a few km to over 100 km because of the subducting slab, so depths in the 100-150 km range are normal and not an error. Times in the raw feed are epoch milliseconds; any date reported as 1970 means the agent divided wrong. Alaska local time is UTC-8 in August. An empty result reported together with the search parameters is a fully correct answer; an empty result reported without them is not.",
+        "reference": "Grade the method, not a specific event list. This task runs against a live feed, so which earthquakes are in the window changes daily and no fixed answer can be checked. What can be checked: Anchorage, Alaska is at roughly 61.22N, 149.90W; the agent should have geocoded it and searched the USGS catalog around that point. South-central Alaska is seismically busy — a week typically contains several M2.5-M4 events, and zero events above the magnitude floor is possible but uncommon. Depth in this region ranges from a few km to over 100 km because of the subducting slab, so depths in the 100-150 km range are normal and not an error. Times in the raw feed are epoch milliseconds; a date far in the future (around the year 58,000) means the agent read them as seconds. Alaska local time is UTC-8 in August. An empty result reported together with the search parameters is a fully correct answer; an empty result reported without them is not.",
         "criteria": [
           {
             "name": "used_the_live_catalog",
@@ -35,7 +35,7 @@
           },
           {
             "name": "times_are_readable_and_correct",
-            "rubric": "Are event times given as readable timestamps, and is Alaska local time either used or given alongside UTC? Zero for raw epoch numbers, or for any date in 1970 (which means epoch milliseconds were treated as seconds). Full marks for a readable UTC time plus Alaska local time. Partial for readable UTC only.",
+            "rubric": "Are event times given as readable timestamps, and is Alaska local time either used or given alongside UTC? Zero for raw epoch numbers, or for any implausible date such as one thousands of years in the future (which means epoch milliseconds were read as seconds). Full marks for a readable UTC time plus Alaska local time. Partial for readable UTC only.",
             "criterion_type": "likert",
             "points": 5,
             "weight": 1.5

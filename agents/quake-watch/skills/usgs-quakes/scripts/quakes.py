@@ -67,7 +67,8 @@ class QuakeProperties(BaseModel):
     @property
     def origin_time(self) -> datetime:
         """The trap this model exists for: epoch milliseconds, not seconds.
-        Dividing wrong reports the year 1970."""
+        Treating the raw value as seconds lands around the year 58,000, or
+        raises outright."""
         return datetime.fromtimestamp(self.time_ms / 1000, tz=UTC)
 
 

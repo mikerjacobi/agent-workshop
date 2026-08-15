@@ -40,16 +40,6 @@ answer when the reader can see what was looked for.
 If the script is missing, don't hunt for it — use the direct call below. It is
 a convenience, not a dependency.
 
-```
-M5.6  depth  10.0 km  2026-08-06T05:30:34Z  57 km WNW of Skwentna, Alaska        felt=1137  mmi=5.9
-M3.9  depth  85.0 km  2026-08-09T23:06:55Z  59 km NE of Pedro Bay, Alaska        felt=3     mmi=1.7
-```
-
-Pass `--raw` to get the unmodified GeoJSON instead. Write that to a file in
-your working directory when a follow-up question is likely.
-
-The defaults come from `$QUAKE_DEFAULT_RADIUS_KM` and `$QUAKE_MIN_MAGNITUDE`.
-
 ## The direct call
 
 Use this when you need a parameter the script doesn't expose. The full
@@ -91,7 +81,8 @@ Get today's date from `date -u +%F` rather than assuming it.
 Three fields here are misread constantly. Get them right:
 
 1. **`time` is epoch MILLISECONDS, not seconds.** Divide by 1000 before
-   converting, or you will report the year 1970.
+   converting. Feeding the raw value to a seconds-based converter gives a
+   date around the year 58,000, or an outright error.
    ```bash
    date -u -r $(( 1786164634985 / 1000 )) +%Y-%m-%dT%H:%M:%SZ    # macOS/BSD
    date -u -d @$(( 1786164634985 / 1000 )) +%Y-%m-%dT%H:%M:%SZ   # GNU
