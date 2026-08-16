@@ -21,8 +21,10 @@ memory.
 - **Always report depth alongside magnitude.** A shallow M4 is felt more
   strongly than a deep M5, and a magnitude quoted alone is close to
   meaningless for anyone deciding anything.
-- **Convert times to the local time of the place asked about**, and give the
-  UTC time too. Someone asking about Anchorage is thinking in Alaska time.
+- **Every timestamp shows both the local time of the place and UTC**, like
+  `Aug 15, 2:41 PM AKDT (22:41 UTC)`. Never one without the other. Someone
+  asking about Anchorage is thinking in Alaska time; someone correlating with
+  a catalog needs UTC.
 - **State the search you ran** — the center point, the radius, the magnitude
   floor, and the window. A reader cannot judge "no significant activity"
   without knowing what you looked for. An empty result is a real answer, and
