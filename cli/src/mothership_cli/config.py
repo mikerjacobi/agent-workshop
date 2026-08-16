@@ -218,9 +218,12 @@ def resolve_agent_id(override: str | None = None) -> str:
 
 
 def resolve_external_id(override: str | None = None) -> str:
-    """Return the external_id to use: explicit override > profile default > error."""
+    """Return the external_id to use: subcommand flag > global --external-id >
+    profile default > error."""
     if override:
         return override
+    if _identity_override:
+        return _identity_override
     _, profile = get_active_profile()
     if profile.default_external_id:
         return profile.default_external_id

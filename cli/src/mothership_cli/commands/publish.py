@@ -10,17 +10,16 @@ import subprocess
 from datetime import UTC, datetime
 
 from mothership_cli.client import get_client
-from mothership_cli.client_models.api_output_model import ApiError
 from mothership_cli.client_models.common import KeywordFilter
 from mothership_cli.errors import MothershipCliError
-from mothership_cli.http import MothershipClient
+from mothership_cli.http import ApiError, MothershipClient
 from mothership_cli.models.agent_catalog import (
     AgentCatalogEntry,
     CreateAgentInput,
     SearchAgentCatalogInput,
     UpdateAgentInput,
 )
-from mothership_cli.models.agent_version import CreateAgentVersionInput
+from mothership_cli.models.agent_version import CreateAgentVersionInput, SearchAgentVersionsInput
 from mothership_cli.models.harness import TransportMode
 from mothership_cli.models.sandbox import SandboxState, SearchSandboxesInput
 from mothership_cli.workspace import Agent, AgentManifest
@@ -51,8 +50,16 @@ def _register(client: MothershipClient, slug: str, m: AgentManifest, image: str,
 
 
 def _promote(client: MothershipClient, agent: AgentCatalogEntry, m: AgentManifest, image: str, version: str) -> None:
-    new = client.create_agent_version(CreateAgentVersionInput(
-        agent_id=agent.agent_id, version=version, image=image, enabled=True))
+    try:
+        new = client.create_agent_version(CreateAgentVersionInput(
+            agent_id=agent.agent_id, version=version, image=image, enabled=True))
+    except ApiError as exc:
+        if exc.status != 409:
+            raise
+        # The label already exists (e.g. --skip-build re-run); promote that one.
+        versions, _ = client.search_agent_versions(SearchAgentVersionsInput(
+            agent_id=KeywordFilter(eq=agent.agent_id), version=KeywordFilter(eq=version)))
+        new = versions[0]
     # Model and parameters live on the catalog row rather than the version, so
     # a manifest edit needs its own call.
     client.update_agent(UpdateAgentInput(
