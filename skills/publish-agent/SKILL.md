@@ -12,8 +12,8 @@ mothership publish <dir> --slug <slug>
 ```
 
 This builds the image, pushes it, registers the agent or promotes a new
-version, and stops any running sandbox so the next message picks up the change.
-It takes three to five minutes, mostly the Docker build.
+version, and stops any running sandbox so the next message picks up the
+change.
 
 `--slug` defaults to the slug in `agents/<dir>/agent.json`. Slugs must be
 unique, so on a shared deployment give each person their own, like

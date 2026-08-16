@@ -14,8 +14,7 @@ mothership evals run <dir> --slug <slug>
 
 This uploads each file in `agents/<dir>/evals/`, starts a run, waits for it,
 and prints the report. Add `--task <name>` to run one file instead of all of
-them. Budget two to five minutes per task, because each one gets its own
-sandbox.
+them. Each task gets its own sandbox, so runs are not instant.
 
 To compare against an earlier run, pass its id:
 

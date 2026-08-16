@@ -36,8 +36,8 @@ mothership messages submit "and how fast" --thread-id <thread_id>
 ```
 
 It starts a sandbox if needed, sends, and waits for the reply. The first
-message takes 30 to 90 seconds because the container has to boot; later ones
-are fast. Add `--force-sandbox-recreate` after re-pushing the same image tag.
+message also waits for the container to boot; later ones skip that. Add
+`--force-sandbox-recreate` after re-pushing the same image tag.
 
 Read a conversation back with `mothership messages search --thread-id <id>`,
 or list them with `mothership threads search`.
