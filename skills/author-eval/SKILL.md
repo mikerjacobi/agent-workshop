@@ -1,144 +1,53 @@
 ---
 name: author-eval
-description: "Write an eval task file for an agent: choose the stimulus, write rubric criteria the judge can actually apply, and check the spec before running it. Use when the user wants to add a test, an eval, a rubric, or a check for their agent's behavior."
+description: "Write an eval task file for an agent: the question to ask, and the criteria a judge grades the answer against. Use when the user wants to add a test, an eval, a rubric, or a check for their agent's behavior."
 ---
 
-# Author an eval
+# Write an eval
 
-An eval task is a **situation** plus **what good looks like**. It lives in
-`agents/<name>/evals/<task>.json` and it is the only thing in this repo that
-makes a persona change measurable rather than a matter of taste.
-
-Start from `agents/_template/evals/example-task.json`, or from
-`agents/quake-watch/evals/` for worked examples.
-
-## The schema is the model file
-
-`cli/mothership-client/src/mothership_client/models/eval_spec.py` is the
-authority on every field a spec accepts — it is the class the API validates
-with, not a description of it. Read it rather than guessing, and read it again
-when a 422 comes back, because the error names the field.
-
-To check a file before syncing it, validate against that same class:
-
-```bash
-python3 -c "import json,sys; from mothership_client.models.eval_task import CreateEvalTaskInput as T; \
-T(agent_id='agent_check', **json.load(open(sys.argv[1]))); print('ok', sys.argv[1])" \
-agents/<name>/evals/<task>.json
-```
-
-`agent_id` is a placeholder there — files on disk omit it, and `run-eval`
-injects the real one at sync time.
-
-## The file
+One file per task, in `agents/<dir>/evals/`. Copy an existing one and change
+it: `agents/quake-watch/evals/recent-activity.json` is the worked example.
 
 ```json
 {
-  "slug": "<agent>-<what-it-tests>",
-  "description": "One sentence: the behavior this holds the agent to.",
+  "slug": "what-it-tests",
+  "description": "One sentence.",
   "tags": ["smoke"],
   "spec": {
-    "stimulus": { "kind": "prompt", "instruction": "..." },
-    "scorers": [ ... ],
-    "timeout_sec": 600
+    "stimulus": { "kind": "prompt", "instruction": "The message to send." },
+    "scorers": [
+      { "kind": "artifact_gate",
+        "checks": [{ "check": "min_length", "file": "response.md", "value": 80 }] },
+      { "kind": "llm_judge",
+        "reference": "The correct answer, and how close counts as close enough.",
+        "criteria": [
+          { "name": "did_the_thing", "rubric": "What full marks and zero look like.",
+            "criterion_type": "binary", "points": 2, "weight": 2.0 }
+        ] }
+    ],
+    "timeout_sec": 900
   }
 }
 ```
 
-`slug` must be unique across the deployment and kebab-case — prefix it with
-the agent slug. No `agent_id` field: it is injected at sync time from
-`agent.json`.
+No `agent_id`: `mothership evals run` fills that in.
 
-## Choosing the stimulus
+The judge sees the agent's answer, your `reference`, and the rubric text, and
+nothing else. So `reference` has to carry the actual correct answer along with
+the tolerances, otherwise the judge invents a standard and picks a different
+one each run. Write the instruction the way a user would type it, not the way a
+test would phrase it.
 
-`prompt` is a self-contained instruction and covers nearly everything at this
-workshop. Write it the way a real user would type it, not the way a test would
-phrase it. "Where is the ISS right now?" is a better stimulus than "Invoke the
-iss-position skill and report coordinates" — the second one tests nothing,
-because it already contains the answer to what the agent was supposed to
-figure out.
+Use `binary` for whether the agent did something at all and `likert` for how
+well. `weight` is relative within the scorer, so put the weight on what you
+care about.
 
-`thread_replay` (replay a captured conversation) and `simulated_user` (a
-persona-driven multi-turn chat) also exist. `simulated_user` is stored but not
-yet executed by the platform — don't build a workshop task on it.
+Then run it:
 
-## Scorers
-
-Stack them. The final score is the weighted mean of the non-gate scorers.
-
-**`artifact_gate`** — cheap programmatic checks that run first. A failed gate
-zeroes the reward and skips the judge, so no LLM call is spent grading an
-empty response. Files are relative to the workspace; the agent's answer is
-always at `response.md`.
-
-```json
-{ "kind": "artifact_gate",
-  "checks": [{ "check": "min_length", "file": "response.md", "value": 40 }] }
+```bash
+mothership evals run <dir> --slug <slug> --task <filename>
 ```
 
-Available checks: `file_exists`, `valid_json`, `valid_yaml`, `min_length`,
-`attachment_mime_present`.
-
-**`llm_judge`** — the rubric. This is where the work is.
-
-```json
-{ "kind": "llm_judge",
-  "weight": 1.0,
-  "reference": "ground truth and tolerances",
-  "criteria": [
-    { "name": "used_live_data", "rubric": "...", "criterion_type": "binary", "points": 2, "weight": 2.0 }
-  ] }
-```
-
-**`script`** — your own verifier, for outcomes only your systems can confirm.
-Contract-only on most deployments today; skip it at the workshop.
-
-## Writing criteria that score consistently
-
-The judge sees the agent's response, your `reference`, and the rubric text.
-Nothing else. Everything it needs to grade has to be in those.
-
-- **`reference` is ground truth, not a restatement of the question.** Put the
-  correct answer in it, plus the tolerances: what counts as close enough, what
-  is definitely wrong, and what an honest "I can't do that" looks like. Without
-  a reference the judge invents a standard, and it invents a different one each
-  run.
-- **One criterion, one question.** "Was it accurate and concise?" scores
-  neither. Split them.
-- **Say what full marks and zero look like, concretely.** "Full marks if it
-  shows the division `1440 / 15.50 = 92.9 min`. Zero for a bare number."
-- **`binary` for did-it-at-all, `likert` for how-well.** Binary with
-  `points: 2` reads cleanly as pass/fail. Likert with `points: 5` gives the
-  judge room to grade quality.
-- **`weight` is relative within the scorer.** Put the weight on the thing you
-  actually care about. If grounding matters three times as much as concision,
-  say so — otherwise a verbose correct answer and a terse fabricated one score
-  the same.
-- **Do not penalize honest refusals** unless refusing is the failure. State
-  that in the reference; judges default to rewarding an answer over a decline.
-
-## Test the boundary, not just the happy path
-
-Every agent should have at least two tasks:
-
-1. **Does it do its job**, using its skills, on a question it should handle.
-2. **Does it refuse the adjacent thing** it shouldn't do — the capability a
-   general-purpose model would happily improvise.
-
-The second is what distinguishes a purpose-built agent from a chat model with
-a system prompt, so it is the one worth writing carefully. See
-`agents/quake-watch/evals/refuses-prediction.json`: the highest-weighted
-criterion is that no probability figure appears anywhere in the response.
-
-## Common rejections
-
-- `slug` not kebab-case, or not unique across the deployment.
-- An `agent_id` left in the file — it is injected at sync time, so remove it.
-- A `scorers` list containing only gates. At least one non-gate scorer is
-  required, since a gate can only zero a reward.
-- Extra keys anywhere. The models are `extra="forbid"`, so a typo'd field name
-  is an error rather than a silently ignored one.
-
-## Then run it
-
-Hand off to the `run-eval` skill, which syncs the file and starts the run.
+A 422 means the file does not validate, and the error names the field. Every
+field a task accepts is defined in
+`cli/src/mothership_cli/models/eval_spec.py`.
