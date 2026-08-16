@@ -19,9 +19,9 @@ It takes three to five minutes, mostly the Docker build.
 unique, so on a shared deployment give each person their own, like
 `jsmith-quake-watch`.
 
-`MOTHERSHIP_IMAGE_REGISTRY` must be set. If it is not, ask the user for the
-value rather than pointing the catalog at a local image tag, which the
-deployment cannot pull.
+The image registry defaults to the workshop's. Override it with `--registry`
+only if the user names a different one; never point the catalog at a local
+image tag, which the deployment cannot pull.
 
 Report the printed `agent_id` back to the user, because talking to the agent
 needs it:

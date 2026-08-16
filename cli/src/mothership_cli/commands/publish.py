@@ -27,6 +27,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import CliPositionalArg
 
 
+# The registry the workshop deployment pulls from. --registry or
+# MOTHERSHIP_IMAGE_REGISTRY override it.
+DEFAULT_REGISTRY = "us-west1-docker.pkg.dev/mothership-shared/mothership-docker-repository"
+
+
 class PublishError(MothershipCliError):
     """Publishing failed. Handled by the CLI's top-level handler."""
 
@@ -94,12 +99,7 @@ class PublishCmd(BaseModel):
 
         source = Agent.load(self.agent, self.agents_dir)
         slug = self.slug or source.manifest.slug
-        registry = (self.registry or os.environ.get("MOTHERSHIP_IMAGE_REGISTRY", "")).rstrip("/")
-        if not registry:
-            raise PublishError(
-                "No image registry. Pass --registry or set MOTHERSHIP_IMAGE_REGISTRY.\n"
-                "A local image tag will not work: the deployment pulls from a registry."
-            )
+        registry = (self.registry or os.environ.get("MOTHERSHIP_IMAGE_REGISTRY") or DEFAULT_REGISTRY).rstrip("/")
         version = self.version or datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
         image = f"{registry}/{slug}:{version}"
         client = get_client()

@@ -2,11 +2,11 @@
 
 Publish an agent, talk to it, score it, change it, and see the score move.
 
+The workshop environment comes with this repo, registry access, and platform
+credentials already in place. From the repo root:
+
 ```bash
-git clone https://github.com/mikerjacobi/agent-workshop.git
-cd agent-workshop
 pip install -e cli
-export MOTHERSHIP_IMAGE_REGISTRY=<ask workshop staff>
 ```
 
 Then open [`workshop.ipynb`](workshop.ipynb) and run it top to bottom.
