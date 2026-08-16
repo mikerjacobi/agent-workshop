@@ -2,9 +2,6 @@
 
 Publish an agent, talk to it, score it, change it, and see the score move.
 
-The workshop environment comes with this repo, registry access, and platform
-credentials already in place. From the repo root:
-
 ```bash
 pip install -e cli
 ```
