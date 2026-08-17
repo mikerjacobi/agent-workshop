@@ -1,6 +1,9 @@
-# One agent image: the openclaw base plus the staged workspace.
-# `mothership publish` stages the build context; this file never changes
-# per agent.
+# One agent image: the openclaw base plus the agent's files.
+#
+# `mothership publish` builds this from a temporary directory it stages, not
+# from agents/. That staging copies the agent directory to workspace/ (minus
+# agent.json and evals/, with skills/ moved to .claude/skills/) and places
+# agent-pre-start.sh beside it. This file never changes per agent.
 FROM --platform=linux/amd64 ghcr.io/vulcanskylight/mothership/openclaw-mothership:latest
 
 USER root
