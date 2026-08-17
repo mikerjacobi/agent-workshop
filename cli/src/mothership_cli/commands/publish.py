@@ -7,7 +7,9 @@ version promotion, and a sandbox recycle.
 from __future__ import annotations
 
 import subprocess
+import tempfile
 from datetime import UTC, datetime
+from pathlib import Path
 
 from mothership_cli.client import get_client
 from mothership_cli.client_models.common import KeywordFilter
@@ -22,7 +24,7 @@ from mothership_cli.models.agent_catalog import (
 from mothership_cli.models.agent_version import CreateAgentVersionInput, SearchAgentVersionsInput
 from mothership_cli.models.harness import TransportMode
 from mothership_cli.models.sandbox import SandboxState, SearchSandboxesInput
-from mothership_cli.workspace import Agent, AgentManifest
+from mothership_cli.workspace import Agent, AgentManifest, stage_build_context
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import CliPositionalArg
 
@@ -106,8 +108,10 @@ class PublishCmd(BaseModel):
 
         if not self.skip_build:
             print(f"building {image}")
-            _run(["docker", "build", "--build-arg", f"AGENT={self.agent}", "-t", image,
-                  "-f", f"{self.agents_dir}/Dockerfile", self.agents_dir], "docker build")
+            with tempfile.TemporaryDirectory(prefix="mothership-build-") as context:
+                stage_build_context(source, Path(context), self.agents_dir)
+                _run(["docker", "build", "-t", image,
+                      "-f", f"{self.agents_dir}/Dockerfile", context], "docker build")
             print(f"pushing {image}")
             _run(["docker", "push", image], "docker push")
 

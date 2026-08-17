@@ -7,6 +7,7 @@ its evals. ``publish`` and ``evals run`` both start here.
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 from mothership_cli.errors import MothershipCliError
@@ -91,3 +92,23 @@ def read_eval_task(path: Path, agent_id: str, slug: str) -> dict:
     document["agent_id"] = agent_id
     document["slug"] = slug
     return document
+
+
+# Build noise that must not ship inside a skill directory.
+_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store")
+
+
+def stage_build_context(agent: Agent, context: Path, agents_dir: str = "agents") -> None:
+    """Lay out the docker build context: the seed script plus the reshaped
+    workspace. The reshape is the runtime convention: ``agent.json`` and
+    ``evals/`` are CLI inputs and never ship, and ``skills/`` is authored where
+    a person looks while the harness discovers ``.claude/skills/``."""
+    workspace = context / "workspace"
+    shutil.copytree(agent.directory, workspace, symlinks=False, ignore=_IGNORE)
+    (workspace / "agent.json").unlink(missing_ok=True)
+    shutil.rmtree(workspace / "evals", ignore_errors=True)
+    skills = workspace / "skills"
+    if skills.is_dir():
+        (workspace / ".claude").mkdir()
+        skills.rename(workspace / ".claude" / "skills")
+    shutil.copy2(Path(agents_dir) / "agent-pre-start.sh", context / "agent-pre-start.sh")

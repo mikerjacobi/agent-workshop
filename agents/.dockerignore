@@ -1,6 +1,0 @@
-# The build context is agents/, and cp -rL copies whatever it finds. Keep
-# local build noise out of the image — a __pycache__ baked into a skill
-# directory would ship a stale .pyc alongside every script.
-__pycache__/
-*.py[cod]
-.DS_Store
