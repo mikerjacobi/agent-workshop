@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class AgentVersion(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     version_id: str
     agent_id: str

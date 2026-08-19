@@ -21,3 +21,7 @@ venv/
 # Tooling caches
 .mypy_cache/
 .ruff_cache/
+
+# Workshop credentials, never committed
+workshop-sa.json
+setup_ai2_workshop_demo.py

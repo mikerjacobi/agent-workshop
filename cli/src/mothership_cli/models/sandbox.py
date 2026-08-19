@@ -37,7 +37,7 @@ ACTIVE_SANDBOX_STATES: tuple[SandboxState, ...] = (
 
 
 class Sandbox(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     sandbox_id: str
     external_id: str

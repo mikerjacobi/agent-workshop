@@ -26,7 +26,7 @@ class AgentThread(BaseModel):
     messages and track whether a response is currently in-flight.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     thread_id: str
     external_id: str

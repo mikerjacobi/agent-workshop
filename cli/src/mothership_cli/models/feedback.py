@@ -19,7 +19,7 @@ class FeedbackType(StrEnum):
 class AgentFeedback(BaseModel):
     """Per-message user feedback (thumbs up/down with optional comment)."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     message_id: str
     external_id: str

@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CriterionTemplate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     template_id: str
     org_id: str | None = None

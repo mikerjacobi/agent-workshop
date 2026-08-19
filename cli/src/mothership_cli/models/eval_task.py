@@ -15,7 +15,7 @@ _SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]{0,98}[a-z0-9]$"  # 2-100 chars, kebab
 
 
 class EvalTask(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     task_id: str
     org_id: str | None = None

@@ -40,7 +40,7 @@ class AgentMessage(BaseModel):
     flow through the WebSocket bridge.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     message_id: str
     thread_id: str

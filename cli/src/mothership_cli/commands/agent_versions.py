@@ -80,10 +80,10 @@ class AgentVersionsSearch(BaseModel):
         query = SearchAgentVersionsInput(**filters)
         try:
             if is_json_output():
-                data = client._search("/api/agent-versions/search", query)
+                data = client._search(client._scoped("agents", f"/{self.agent_id}/versions/search"), query)
                 print(json.dumps(data, indent=2, default=str))
                 return
-            versions, total = client.search_agent_versions(query)
+            versions, total = client.search_agent_versions(self.agent_id, query)
         except ApiError as e:
             raise SystemExit(str(e)) from e
         _print_versions(versions, total)
@@ -132,17 +132,18 @@ class AgentVersionsUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version_id: CliPositionalArg[str] = Field(description="Version to update")
+    agent_id: str = Field(description="Agent the version belongs to")
     version: str | None = Field(default=None, description="New version label")
     image: str | None = Field(default=None, description="New Docker image")
     enabled: bool | None = Field(default=None, description="Enable or disable")
 
     def cli_cmd(self) -> None:
         client = get_client()
-        patch = self.model_dump(exclude={"version_id"}, exclude_none=True)
+        patch = self.model_dump(exclude={"version_id", "agent_id"}, exclude_none=True)
         if not patch:
             raise SystemExit("Nothing to update. Pass at least one flag.")
         try:
-            updated = client.update_agent_version(UpdateAgentVersionInput(
+            updated = client.update_agent_version(self.agent_id, UpdateAgentVersionInput(
                 version_id=self.version_id, **patch,
             ))
         except ApiError as e:
@@ -157,11 +158,12 @@ class AgentVersionsDelete(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version_id: CliPositionalArg[str] = Field(description="Version to delete")
+    agent_id: str = Field(description="Agent the version belongs to")
 
     def cli_cmd(self) -> None:
         client = get_client()
         try:
-            deleted = client.delete_agent_version(self.version_id)
+            deleted = client.delete_agent_version(self.agent_id, self.version_id)
         except ApiError as e:
             raise SystemExit(str(e)) from e
         print(f"Deleted version '{deleted.version}' ({deleted.version_id})")

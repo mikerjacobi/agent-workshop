@@ -94,7 +94,7 @@ class EvalRunConfig(BaseModel):
 
 
 class EvalRun(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     run_id: str
     org_id: str | None = None
@@ -120,7 +120,7 @@ class EvalRun(BaseModel):
 
 
 class EvalResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     run_id: str
     task_id: str

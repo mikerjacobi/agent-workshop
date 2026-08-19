@@ -52,7 +52,9 @@ class AgentParameter(BaseModel):
 
 
 class AgentCatalogEntry(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    # Read model: ignore fields the server has grown since this copy, so an
+    # additive deploy does not break the workshop.
+    model_config = ConfigDict(extra="ignore")
 
     # Generated surrogate id (``agent_XXXXX``).
     agent_id: str

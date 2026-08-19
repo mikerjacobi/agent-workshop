@@ -4,7 +4,7 @@
 # from agents/. That staging copies the agent directory to workspace/ (minus
 # agent.json and evals/, with skills/ moved to .claude/skills/) and places
 # agent-pre-start.sh beside it. This file never changes per agent.
-FROM --platform=linux/amd64 ghcr.io/vulcanskylight/mothership/openclaw-mothership:latest
+FROM --platform=linux/amd64 us-west1-docker.pkg.dev/skylight-proto-1/workshop-images/openclaw-mothership-base:2026-08-18@sha256:9fdb2117e0cf353b6c9d432aaf028a653b72c3f6657e24d15401660e996968a8
 
 USER root
 

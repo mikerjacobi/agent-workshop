@@ -249,22 +249,26 @@ class MothershipClient:
 
     # ── Agent Versions ─────────────────────────────────────────
 
-    def search_agent_versions(self, query: SearchAgentVersionsInput) -> tuple[list[AgentVersion], int]:
-        data = self._request("POST", "/api/agent-versions/search", json=query.model_dump(mode="json", exclude_none=True, exclude_unset=True))
+    def _versions_path(self, agent_id: str, subpath: str = "") -> str:
+        """Versions hang off their agent (mothership#439): /agents/{id}/versions."""
+        return self._scoped("agents", f"/{quote(agent_id, safe='')}/versions{subpath}")
+
+    def search_agent_versions(self, agent_id: str, query: SearchAgentVersionsInput) -> tuple[list[AgentVersion], int]:
+        data = self._request("POST", self._versions_path(agent_id, "/search"), json=query.model_dump(mode="json", exclude_none=True, exclude_unset=True))
         return self._unwrap_typed(data, AgentVersion)
 
     def create_agent_version(self, request: CreateAgentVersionInput) -> AgentVersion:
-        data = self._request("POST", "/api/agent-versions/", json=request.model_dump(mode="json", exclude_none=True))
+        data = self._request("POST", self._versions_path(request.agent_id), json=request.model_dump(mode="json", exclude_none=True))
         records, _ = self._unwrap_typed(data, AgentVersion)
         return records[0]
 
-    def update_agent_version(self, request: UpdateAgentVersionInput) -> AgentVersion:
-        data = self._request("PATCH", f"/api/agent-versions/{request.version_id}", json=request.model_dump(exclude_none=True, exclude={"version_id"}))
+    def update_agent_version(self, agent_id: str, request: UpdateAgentVersionInput) -> AgentVersion:
+        data = self._request("PATCH", self._versions_path(agent_id, f"/{request.version_id}"), json=request.model_dump(exclude_none=True, exclude={"version_id"}))
         records, _ = self._unwrap_typed(data, AgentVersion)
         return records[0]
 
-    def delete_agent_version(self, version_id: str) -> AgentVersion:
-        data = self._request("DELETE", f"/api/agent-versions/{version_id}")
+    def delete_agent_version(self, agent_id: str, version_id: str) -> AgentVersion:
+        data = self._request("DELETE", self._versions_path(agent_id, f"/{version_id}"))
         records, _ = self._unwrap_typed(data, AgentVersion)
         return records[0]
 
@@ -331,9 +335,11 @@ class MothershipClient:
 
     def send_message(self, thread_id: str, content: str) -> SendMessageOutput:
         body = RestSendMessageInput(thread_id=thread_id, content=content)
+        # The first send after a sandbox boots waits on the coordinator's
+        # harness attach, which can exceed the default request timeout.
         data = self._request(
             "POST", self._scoped("messages", "/"), json=body.model_dump(mode="json"),
-            retries=3, retry_on_status={502, 503},
+            retries=3, retry_on_status={502, 503}, timeout=120.0,
         )
         records, _ = self._unwrap_typed(data, SendMessageOutput)
         return records[0]
