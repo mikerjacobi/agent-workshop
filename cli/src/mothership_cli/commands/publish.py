@@ -14,6 +14,7 @@ import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
+from mothership_cli.client import ensure_org_member
 from mothership_cli.config import get_active_profile, resolve_api_key, resolve_identity, resolve_org
 from mothership_cli.models.org import DEFAULT_ORG_ID
 from mothership_cli.client_models.common import KeywordFilter
@@ -132,29 +133,6 @@ def _catalog_client() -> MothershipClient:
     return _get()
 
 
-def _ensure_membership(external_id: str) -> None:
-    """Enroll the caller in the target org before their first conversation.
-
-    Sends on a thread are allowed only for members of the thread's org, and a
-    new external_id is not a member of anything yet. The org API key can enroll
-    them, but only while no identity is asserted beside it (asserting one drops
-    the key to plain member), so this goes out on a bare client. Re-enrolling
-    an existing member is a no-op, and a 403 means the caller is not using an
-    org-admin credential, where membership must already exist for any of this
-    to work.
-    """
-    org = resolve_org()
-    if org == DEFAULT_ORG_ID:
-        return  # everyone is JIT-enrolled in the default org
-    _, profile = get_active_profile()
-    bare = MothershipClient(profile.base_url, org=org, external_id=None, api_key=resolve_api_key())
-    try:
-        bare._request("POST", f"/api/orgs/{org}/members", json={"external_id": external_id})
-    except ApiError as exc:
-        if exc.status not in (403, 409):
-            raise
-
-
 def _find(client: MothershipClient, slug: str) -> AgentCatalogEntry | None:
     agents, _ = client.search_agents(SearchAgentCatalogInput(slug=KeywordFilter(eq=slug)))
     return agents[0] if agents else None
@@ -219,7 +197,7 @@ class PublishCmd(BaseModel):
         client = _catalog_client()
         identity = resolve_identity()
         if identity:
-            _ensure_membership(identity)
+            ensure_org_member(identity)
 
         manifest = source.manifest
         if bucket:

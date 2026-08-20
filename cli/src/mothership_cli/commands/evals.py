@@ -11,7 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-from mothership_cli.client import ApiError, get_client
+from mothership_cli.client import ApiError, ensure_org_member, get_client
 from mothership_cli.client_models.api_output_model import ApiOutputModel
 from mothership_cli.client_models.common import KeywordFilter
 from mothership_cli.errors import MothershipCliError
@@ -291,6 +291,7 @@ class EvalsRun(BaseModel):
         agent_id = agents[0].agent_id
 
         task_ids = []
+        synced_slugs: list[str] = []
         for path in source.eval_files(self.task):
             document = read_eval_task(path, agent_id, path.stem)
             task_slug = f"{self.prefix or slug}-{document['slug']}"
@@ -309,11 +310,20 @@ class EvalsRun(BaseModel):
                 task_id = (created.get("records") or [{}])[0]["task_id"]
             sys.stderr.write(f"task {task_slug}\n")
             task_ids.append(task_id)
+            synced_slugs.append(task_slug)
 
         data = client._request("POST", client._scoped("evals", "/runs"), json={
             "agent_id": agent_id, "task_ids": task_ids, "executor": "platform"})
         run_id = (data.get("records") or [{}])[0]["run_id"]
         sys.stderr.write(f"run {run_id}\n")
+
+        # The platform executor mints eval-{run}-{slug} identities and sends as
+        # them, but only the default org enrolls members implicitly. Enroll the
+        # predicted identities (and the executor) before its first send, which
+        # is minutes away behind a sandbox boot. Stopgap until server-side.
+        for task_slug in synced_slugs:
+            ensure_org_member(f"eval-{run_id.removeprefix('evrun_')}-{task_slug}"[:64])
+        ensure_org_member("agent-evaluator")
 
         deadline = time.monotonic() + self.timeout_seconds
         while True:
