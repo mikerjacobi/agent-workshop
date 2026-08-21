@@ -28,4 +28,4 @@ setup_ai2_workshop_demo.py
 
 # Harbor export written by section 5
 eval-tasks.zip
-exported/
+harbor-tasks/
