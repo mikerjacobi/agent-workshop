@@ -1,14 +1,16 @@
-"""``mothership publish`` — build an agent directory and make it the live version.
+"""``mothership publish`` — upload an agent directory and make it the live version.
 
-One command for what is otherwise a docker build, a push, a catalog write, a
-version promotion, and a sandbox recycle.
+No docker. The agent's files go to the workspace bucket as an immutable
+tarball, and the catalog version points at the shared runtime image, which
+fetches that tarball at boot through its WORKSPACE_URL parameter (see
+agents/agent-pre-start.sh). One command for what is otherwise an upload, a
+catalog write, a version promotion, and a sandbox recycle.
 """
 
 from __future__ import annotations
 
 import io
 import os
-import subprocess
 import tarfile
 import tempfile
 from datetime import UTC, datetime
@@ -31,19 +33,12 @@ from mothership_cli.models.agent_catalog import (
 from mothership_cli.models.agent_version import CreateAgentVersionInput, SearchAgentVersionsInput
 from mothership_cli.models.harness import TransportMode
 from mothership_cli.models.sandbox import SandboxState, SearchSandboxesInput
-from mothership_cli.workspace import Agent, AgentManifest, stage_build_context
+from mothership_cli.workspace import Agent, AgentManifest, stage_workspace
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import CliPositionalArg
 
 
-# The registry the workshop deployment pulls from. --registry or
-# MOTHERSHIP_IMAGE_REGISTRY override it.
-DEFAULT_REGISTRY = "us-west1-docker.pkg.dev/mothership-shared/mothership-docker-repository"
-
-# Upload mode: when MOTHERSHIP_WORKSPACE_BUCKET is set, publish skips docker
-# entirely. The workspace is uploaded to the bucket as an immutable tarball,
-# and the version points at the shared runtime image, which fetches the
-# tarball at boot via its WORKSPACE_URL parameter (see agents/agent-pre-start.sh).
+# The agent parameter the runtime image reads to find its workspace tarball.
 WORKSPACE_URL_PARAM = "WORKSPACE_URL"
 
 
@@ -51,18 +46,14 @@ class PublishError(MothershipCliError):
     """Publishing failed. Handled by the CLI's top-level handler."""
 
 
-def _run(command: list[str], step: str) -> None:
-    if subprocess.run(command, check=False).returncode != 0:
-        raise PublishError(f"{step} failed: {' '.join(command)}")
-
-
-def _workspace_tarball(context: Path) -> bytes:
+def _workspace_tarball(workspace: Path) -> bytes:
     """The staged workspace as a .tgz whose members are workspace-relative."""
-    workspace = context / "workspace"
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
         for path in sorted(workspace.rglob("*")):
-            tar.add(path, arcname=str(path.relative_to(workspace)))
+            # recursive=False: rglob already walks the tree, and letting tar
+            # recurse too would add every file once per ancestor directory.
+            tar.add(path, arcname=str(path.relative_to(workspace)), recursive=False)
     return buffer.getvalue()
 
 
@@ -153,7 +144,7 @@ def _promote(client: MothershipClient, agent: AgentCatalogEntry, m: AgentManifes
     except ApiError as exc:
         if exc.status != 409:
             raise
-        # The label already exists (e.g. --skip-build re-run); promote that one.
+        # The label already exists (e.g. a re-run at the same label); promote that one.
         versions, _ = client.search_agent_versions(agent.agent_id, SearchAgentVersionsInput(
             version=KeywordFilter(eq=version)))
         new = versions[0]
@@ -175,52 +166,39 @@ def _recycle(client: MothershipClient, agent_id: str) -> int:
 
 
 class PublishCmd(BaseModel):
-    """Build an agent directory into an image and make it the live version."""
+    """Upload an agent directory and make it the live version."""
 
     model_config = ConfigDict(extra="forbid")
 
     agent: CliPositionalArg[str] = Field(description="Directory name under agents/")
     slug: str | None = Field(default=None, description="Catalog id (default: the manifest's slug)")
-    registry: str | None = Field(default=None, description="Image registry (default: $MOTHERSHIP_IMAGE_REGISTRY)")
     version: str | None = Field(default=None, description="Version label (default: a UTC timestamp)")
     agents_dir: str = Field(default="agents", description="Where agent directories live")
-    skip_build: bool = Field(default=False, description="Skip docker; requires this slug+version already pushed")
-    bucket: str | None = Field(default=None, description="Workspace bucket (default: $MOTHERSHIP_WORKSPACE_BUCKET); upload mode when set")
-    runtime_image: str | None = Field(default=None, description="Shared runtime image for upload mode (default: $MOTHERSHIP_RUNTIME_IMAGE)")
+    bucket: str | None = Field(default=None, description="Workspace bucket (default: $MOTHERSHIP_WORKSPACE_BUCKET)")
+    runtime_image: str | None = Field(default=None, description="Shared runtime image (default: $MOTHERSHIP_RUNTIME_IMAGE)")
 
     def cli_cmd(self) -> None:
         source = Agent.load(self.agent, self.agents_dir)
         slug = self.slug or source.manifest.slug
-        registry = (self.registry or os.environ.get("MOTHERSHIP_IMAGE_REGISTRY") or DEFAULT_REGISTRY).rstrip("/")
         version = self.version or datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
         bucket = self.bucket or os.environ.get("MOTHERSHIP_WORKSPACE_BUCKET")
+        if not bucket:
+            raise PublishError("no workspace bucket: pass --bucket or set MOTHERSHIP_WORKSPACE_BUCKET")
+        image = self.runtime_image or os.environ.get("MOTHERSHIP_RUNTIME_IMAGE")
+        if not image:
+            raise PublishError("no runtime image: pass --runtime-image or set MOTHERSHIP_RUNTIME_IMAGE")
         client = _catalog_client()
         identity = resolve_identity()
         if identity:
             ensure_org_member(identity)
 
-        manifest = source.manifest
-        if bucket:
-            runtime_image = self.runtime_image or os.environ.get("MOTHERSHIP_RUNTIME_IMAGE")
-            if not runtime_image:
-                raise PublishError("upload mode needs a runtime image: pass --runtime-image or set MOTHERSHIP_RUNTIME_IMAGE")
-            image = runtime_image
-            with tempfile.TemporaryDirectory(prefix="mothership-build-") as context:
-                stage_build_context(source, Path(context), self.agents_dir)
-                payload = _workspace_tarball(Path(context))
-            workspace_url = _upload_workspace(bucket, slug, version, payload)
-            manifest = _with_workspace_param(manifest, workspace_url)
-            print(f"uploaded {workspace_url} ({len(payload)} bytes)")
-        else:
-            image = f"{registry}/{slug}:{version}"
-            if not self.skip_build:
-                print(f"building {image}")
-                with tempfile.TemporaryDirectory(prefix="mothership-build-") as context:
-                    stage_build_context(source, Path(context), self.agents_dir)
-                    _run(["docker", "build", "-t", image,
-                          "-f", f"{self.agents_dir}/Dockerfile", context], "docker build")
-                print(f"pushing {image}")
-                _run(["docker", "push", image], "docker push")
+        with tempfile.TemporaryDirectory(prefix="mothership-publish-") as staging:
+            workspace = Path(staging) / "workspace"
+            stage_workspace(source, workspace)
+            payload = _workspace_tarball(workspace)
+        workspace_url = _upload_workspace(bucket, slug, version, payload)
+        manifest = _with_workspace_param(source.manifest, workspace_url)
+        print(f"uploaded {workspace_url} ({len(payload)} bytes)")
 
         try:
             existing = _find(client, slug)
@@ -239,3 +217,4 @@ class PublishCmd(BaseModel):
             print(f"stopped {stopped} running sandbox(es)")
         print(f"\nagent_id  {agent.agent_id}")
         print(f"image     {image}")
+        print(f"workspace {workspace_url}")

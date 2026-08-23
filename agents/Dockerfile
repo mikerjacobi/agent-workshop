@@ -1,9 +1,11 @@
-# One agent image: the openclaw base plus the agent's files.
+# The shared runtime image every published agent boots from.
 #
-# `mothership publish` builds this from a temporary directory it stages, not
-# from agents/. That staging copies the agent directory to workspace/ (minus
-# agent.json and evals/, with skills/ moved to .claude/skills/) and places
-# agent-pre-start.sh beside it. This file never changes per agent.
+# It carries no agent of its own. `mothership publish` uploads the agent's
+# workspace to the bucket and points that version's WORKSPACE_URL at the
+# tarball, which agent-pre-start.sh fetches and unpacks at boot. Build and push
+# it by hand when the base image or the deps below change:
+#
+#   docker build --platform linux/amd64 -t $MOTHERSHIP_RUNTIME_IMAGE agents/
 FROM --platform=linux/amd64 us-west1-docker.pkg.dev/skylight-proto-1/workshop-images/openclaw-mothership-base:2026-08-18@sha256:9fdb2117e0cf353b6c9d432aaf028a653b72c3f6657e24d15401660e996968a8
 
 USER root
@@ -16,6 +18,5 @@ RUN apt-get update \
 
 # The harness init container runs this to seed the workspace into the sandbox.
 COPY agent-pre-start.sh /usr/local/bin/agent-pre-start.sh
-COPY workspace/ /etc/agent/
 
 USER node

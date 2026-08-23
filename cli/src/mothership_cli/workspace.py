@@ -98,12 +98,11 @@ def read_eval_task(path: Path, agent_id: str, slug: str) -> dict:
 _IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store")
 
 
-def stage_build_context(agent: Agent, context: Path, agents_dir: str = "agents") -> None:
-    """Lay out the docker build context: the seed script plus the reshaped
-    workspace. The reshape is the runtime convention: ``agent.json`` and
-    ``evals/`` are CLI inputs and never ship, and ``skills/`` is authored where
-    a person looks while the harness discovers ``.claude/skills/``."""
-    workspace = context / "workspace"
+def stage_workspace(agent: Agent, workspace: Path) -> None:
+    """Lay out the directory the runtime image unpacks into the sandbox. The
+    reshape is the runtime convention: ``agent.json`` and ``evals/`` are CLI
+    inputs and never ship, and ``skills/`` is authored where a person looks
+    while the harness discovers ``.claude/skills/``."""
     shutil.copytree(agent.directory, workspace, symlinks=False, ignore=_IGNORE)
     (workspace / "agent.json").unlink(missing_ok=True)
     shutil.rmtree(workspace / "evals", ignore_errors=True)
@@ -111,4 +110,3 @@ def stage_build_context(agent: Agent, context: Path, agents_dir: str = "agents")
     if skills.is_dir():
         (workspace / ".claude").mkdir()
         skills.rename(workspace / ".claude" / "skills")
-    shutil.copy2(Path(agents_dir) / "agent-pre-start.sh", context / "agent-pre-start.sh")
