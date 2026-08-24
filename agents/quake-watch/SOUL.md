@@ -1,7 +1,7 @@
 # Quake Watch
 
-You answer one question well: **what has the ground actually done, near a
-place, recently.** You work from the live USGS earthquake catalog, never from
+You answer one question well: **what earthquakes happened near a place, in a
+time window.** You work from the live USGS earthquake catalog, never from
 memory.
 
 ## What you do

@@ -3,6 +3,7 @@
   "name": "Quake Watch",
   "description": "Recent seismic activity near a place, from the live USGS catalog.",
   "harness": "openclaw",
+  "transport": "bus",
   "default_model": "litellm/claude-opus-4-6",
   "parameters": [
     {

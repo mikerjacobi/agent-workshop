@@ -266,6 +266,56 @@ class EvalsRunError(MothershipCliError):
     """Running the agent's evals failed."""
 
 
+def _catalog_agent_id(client, agent: str, slug: str) -> str:
+    agents, _ = client.search_agents(SearchAgentCatalogInput(slug=KeywordFilter(eq=slug)))
+    if not agents:
+        raise EvalsRunError(f"'{slug}' is not in the catalog. Publish it first: mothership publish {agent}")
+    return agents[0].agent_id
+
+
+def _sync_tasks(client, source: Agent, agent_id: str, prefix: str, only: str | None) -> list[tuple[str, str]]:
+    """Upsert each eval file as a platform task for this agent. Returns (task_slug, task_id) pairs."""
+    synced: list[tuple[str, str]] = []
+    for path in source.eval_files(only):
+        document = read_eval_task(path, agent_id, path.stem)
+        task_slug = f"{prefix}-{document['slug']}"
+        document["slug"] = task_slug
+
+        found = client._request("POST", client._scoped("evals", "/tasks/search"),
+                                json={"slug": {"eq": task_slug}, "limit": 1})
+        records = (found or {}).get("records") or []
+        if records:
+            task_id = records[0]["task_id"]
+            patch = {k: v for k, v in document.items() if k != "agent_id"}
+            patch["enabled"] = True
+            client._request("PATCH", client._scoped("evals", f"/tasks/{task_id}"), json=patch)
+        else:
+            created = client._request("POST", client._scoped("evals", "/tasks"), json=document)
+            task_id = (created.get("records") or [{}])[0]["task_id"]
+        synced.append((task_slug, task_id))
+    return synced
+
+
+class EvalsSync(BaseModel):
+    """Register an agent's eval files as platform tasks, without running them."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    agent: CliPositionalArg[str] = Field(description="Directory name under agents/")
+    slug: str | None = Field(default=None, description="Catalog id (default: the manifest's slug)")
+    task: str | None = Field(default=None, description="One eval file to sync (default: all of them)")
+    prefix: str | None = Field(default=None, description="Task slug prefix (default: the agent slug)")
+    agents_dir: str = Field(default="agents", description="Where agent directories live")
+
+    def cli_cmd(self) -> None:
+        source = Agent.load(self.agent, self.agents_dir)
+        slug = self.slug or source.manifest.slug
+        client = get_client()
+        agent_id = _catalog_agent_id(client, self.agent, slug)
+        for task_slug, task_id in _sync_tasks(client, source, agent_id, self.prefix or slug, self.task):
+            print(f"task {task_slug:<48} {task_id}")
+
+
 class EvalsRun(BaseModel):
     """Sync an agent's eval files, run them, and print the report."""
 
@@ -284,33 +334,13 @@ class EvalsRun(BaseModel):
         source = Agent.load(self.agent, self.agents_dir)
         slug = self.slug or source.manifest.slug
         client = get_client()
+        agent_id = _catalog_agent_id(client, self.agent, slug)
 
-        agents, _ = client.search_agents(SearchAgentCatalogInput(slug=KeywordFilter(eq=slug)))
-        if not agents:
-            raise EvalsRunError(f"'{slug}' is not in the catalog. Publish it first: mothership publish {self.agent}")
-        agent_id = agents[0].agent_id
-
-        task_ids = []
-        synced_slugs: list[str] = []
-        for path in source.eval_files(self.task):
-            document = read_eval_task(path, agent_id, path.stem)
-            task_slug = f"{self.prefix or slug}-{document['slug']}"
-            document["slug"] = task_slug
-
-            found = client._request("POST", client._scoped("evals", "/tasks/search"),
-                                    json={"slug": {"eq": task_slug}, "limit": 1})
-            records = (found or {}).get("records") or []
-            if records:
-                task_id = records[0]["task_id"]
-                patch = {k: v for k, v in document.items() if k != "agent_id"}
-                patch["enabled"] = True
-                client._request("PATCH", client._scoped("evals", f"/tasks/{task_id}"), json=patch)
-            else:
-                created = client._request("POST", client._scoped("evals", "/tasks"), json=document)
-                task_id = (created.get("records") or [{}])[0]["task_id"]
+        synced = _sync_tasks(client, source, agent_id, self.prefix or slug, self.task)
+        for task_slug, _ in synced:
             sys.stderr.write(f"task {task_slug}\n")
-            task_ids.append(task_id)
-            synced_slugs.append(task_slug)
+        task_ids = [task_id for _, task_id in synced]
+        synced_slugs = [task_slug for task_slug, _ in synced]
 
         data = client._request("POST", client._scoped("evals", "/runs"), json={
             "agent_id": agent_id, "task_ids": task_ids, "executor": "platform"})
@@ -361,6 +391,7 @@ class EvalsCmd(BaseModel):
     cancel: CliSubCommand[EvalsCancel]
     export: CliSubCommand[EvalsExport]
     report: CliSubCommand[EvalsReport]
+    sync: CliSubCommand[EvalsSync]
     run: CliSubCommand[EvalsRun]
     run_local: CliSubCommand[EvalsRunLocal]
 

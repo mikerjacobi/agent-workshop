@@ -137,7 +137,9 @@ def _register(client: MothershipClient, slug: str, m: AgentManifest, image: str,
     ))
 
 
-def _promote(client: MothershipClient, agent: AgentCatalogEntry, m: AgentManifest, image: str, version: str) -> None:
+def _promote(client: MothershipClient, agent: AgentCatalogEntry, m: AgentManifest, image: str, version: str) -> bool:
+    """Create the version and make it current. True if the version was new."""
+    created = True
     try:
         new = client.create_agent_version(CreateAgentVersionInput(
             agent_id=agent.agent_id, version=version, image=image, enabled=True))
@@ -148,11 +150,14 @@ def _promote(client: MothershipClient, agent: AgentCatalogEntry, m: AgentManifes
         versions, _ = client.search_agent_versions(agent.agent_id, SearchAgentVersionsInput(
             version=KeywordFilter(eq=version)))
         new = versions[0]
+        created = False
     # Model and parameters live on the catalog row rather than the version, so
     # a manifest edit needs its own call.
     client.update_agent(UpdateAgentInput(
         agent_id=agent.agent_id, name=m.name, description=m.description,
-        default_model=m.default_model, parameters=m.parameters, current_version=new.version_id))
+        transport=m.transport, default_model=m.default_model,
+        parameters=m.parameters, current_version=new.version_id))
+    return created
 
 
 def _recycle(client: MothershipClient, agent_id: str) -> int:
@@ -195,26 +200,30 @@ class PublishCmd(BaseModel):
         with tempfile.TemporaryDirectory(prefix="mothership-publish-") as staging:
             workspace = Path(staging) / "workspace"
             stage_workspace(source, workspace)
+            files = sum(1 for p in workspace.rglob("*") if p.is_file())
             payload = _workspace_tarball(workspace)
+        print(f"staged     {files} files: SOUL.md at the root, skills/ moved to .claude/skills/;")
+        print("           agent.json and evals/ are CLI inputs and do not ship")
         workspace_url = _upload_workspace(bucket, slug, version, payload)
         manifest = _with_workspace_param(source.manifest, workspace_url)
-        print(f"uploaded {workspace_url} ({len(payload)} bytes)")
+        print(f"uploaded   {workspace_url} ({len(payload)} bytes)")
 
         try:
             existing = _find(client, slug)
             if existing is None:
                 agent = _register(client, slug, manifest, image, version)
-                print(f"registered {slug}")
+                print(f"registered {slug} in the catalog with version {version}")
             else:
                 agent = existing
-                _promote(client, agent, manifest, image, version)
-                print(f"promoted {slug} to {version}")
+                created = _promote(client, agent, manifest, image, version)
+                print(f"{'created' if created else 'reused':<10} version {version}")
+                print(f"promoted   {slug} current version -> {version}")
             stopped = _recycle(client, agent.agent_id)
         except ApiError as exc:
             raise PublishError(str(exc)) from exc
 
         if stopped:
-            print(f"stopped {stopped} running sandbox(es)")
+            print(f"stopped    {stopped} running sandbox(es) still serving the old version")
         print(f"\nagent_id  {agent.agent_id}")
         print(f"image     {image}")
         print(f"workspace {workspace_url}")
