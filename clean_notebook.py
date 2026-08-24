@@ -13,7 +13,7 @@ from pathlib import Path
 NOTEBOOK = Path(__file__).parent / "workshop.ipynb"
 
 # Variables a participant fills in by hand. The trailing comment is kept.
-PASTE_FIELDS = ("NAME", "AGENT_ID", "THREAD_ID", "BASELINE")
+PASTE_FIELDS = ("NAME", "THREAD_ID", "BASELINE")
 FIELD_LINE = re.compile(rf'^({"|".join(PASTE_FIELDS)}) = ".*?"(\s*#.*)?$')
 
 
