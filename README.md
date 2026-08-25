@@ -15,5 +15,5 @@ if it was already open) and run it top to bottom.
 Before committing the notebook, run `python3 clean_notebook.py`: it strips
 outputs and blanks the paste-in fields, so nobody's ids or results land in git. Everything
 it uses is in this repo: the agent in `agents/quake-watch` (a personality,
-skills, and evals), the `mothership` CLI in `cli/`, and `skills/` with the
+skills, and evals), the `mothership` CLI in `cli/`, and `.claude/skills/` with the
 same steps written for Claude Code.

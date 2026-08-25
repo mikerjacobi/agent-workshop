@@ -26,6 +26,10 @@ venv/
 workshop-sa.json
 setup_ai2_workshop_demo.py
 
-# Harbor export written by section 5
+# Harbor export written by section 7
 eval-tasks.zip
 harbor-tasks/
+
+# Written by section 9 with the participant's own ids; Claude Code local state
+.claude/skills/ask-quake-watch/
+.claude/worktrees/
