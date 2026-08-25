@@ -30,6 +30,7 @@ setup_ai2_workshop_demo.py
 eval-tasks.zip
 harbor-tasks/
 
-# Written by section 9 with the participant's own ids; Claude Code local state
+# Written by section 9 with the participant's own ids and the platform key; Claude Code local state
 .claude/skills/ask-quake-watch/
+.claude/settings.local.json
 .claude/worktrees/
